@@ -8,7 +8,7 @@
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = Dummy1
+TARGET = Dummy
 TEMPLATE = app
 
  DEPENDPATH += .
@@ -20,13 +20,19 @@ DESTDIR = $$PWD //Für relative Pfade
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
     dialog.cpp \
-    globals.cpp
+    globals.cpp \
+    notification.cpp \
+    networkclass.cpp \
+    mainclass.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += \
     dialog.h \
-    globals.h
+    globals.h \
+    notification.h \
+    networkclass.h \
+    mainclass.h
 
-FORMS    += mainwindow.ui \
-    dialog.ui
+FORMS    += \
+    dialog.ui \
+    notification.ui

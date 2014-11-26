@@ -28,6 +28,11 @@ Dialog::~Dialog()
     delete ui;
 }
 
+void Dialog::answer()
+{
+
+}
+
 void Dialog::on_pB_abbrechen_clicked()
 {
     this->close();
