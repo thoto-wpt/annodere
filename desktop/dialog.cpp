@@ -10,6 +10,7 @@ Dialog::Dialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Dialog)
 {
+    //muss dann dynamisch gemacht werden: ein neues Objekt pro Aufruf
     ui->setupUi(this);
 
     ui->tE_nachrichten_verlauf->setText(nachricht_string);
