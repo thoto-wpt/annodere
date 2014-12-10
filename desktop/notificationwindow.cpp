@@ -32,18 +32,14 @@ Notification::~Notification()
 
 void Notification::answer()
 {
+
+}
+
+
+void Notification::on_pB_antworten_clicked()
+{
     Dialog dialog;
     dialog.setModal(true);
     this->close(); //jonas: mainwindow zuerst schließen
     dialog.exec();
-}
-
-void Notification::close()
-{
-
-}
-
-void Notification::on_pB_antworten_clicked()
-{
-    answer();
 }

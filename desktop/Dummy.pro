@@ -24,14 +24,16 @@ SOURCES += main.cpp\
     globals.cpp \
     notification.cpp \
     networkclass.cpp \
-    mainclass.cpp
+    mainclass.cpp \
+    rpc_server.cpp
 
 HEADERS  += \
     dialog.h \
     globals.h \
     notification.h \
     networkclass.h \
-    mainclass.h
+    mainclass.h \
+    rpc_server.h
 
 FORMS    += \
     dialog.ui \

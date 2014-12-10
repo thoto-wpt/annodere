@@ -22,7 +22,8 @@ private:
 public:
     explicit Dialog(QWidget *parent = 0);
     ~Dialog();
-    void answer();
+    void send_reply();
+    void close();
 
 private slots:
     void on_pB_abbrechen_clicked();

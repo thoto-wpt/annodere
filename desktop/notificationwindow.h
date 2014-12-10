@@ -21,7 +21,6 @@ public:
     explicit Notification(QWidget *parent = 0);
     ~Notification();
     void answer();
-    void close();
 
 private slots:
     void on_pB_antworten_clicked();

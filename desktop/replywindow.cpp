@@ -28,7 +28,17 @@ Dialog::~Dialog()
     delete ui;
 }
 
-void Dialog::send_reply()
+void Dialog::answer()
+{
+
+}
+
+void Dialog::on_pB_abbrechen_clicked()
+{
+    this->close();
+}
+
+void Dialog::on_pB_antworten_clicked()
 {
     if(ui->tE_antwort->toPlainText() != "") //jonas: leere Nachricht abfangen
     {
@@ -49,19 +59,4 @@ void Dialog::send_reply()
         msgBox.setWindowTitle("Fehler");
         msgBox.exec();
     }
-}
-
-void Dialog::close()
-{
-    this->close();
-}
-
-void Dialog::on_pB_abbrechen_clicked()
-{
-    Dialog::close();
-}
-
-void Dialog::on_pB_antworten_clicked()
-{
-   Dialog::send_reply();
 }
