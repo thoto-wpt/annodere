@@ -20,21 +20,21 @@ DESTDIR = $$PWD //Für relative Pfade
 
 
 SOURCES += main.cpp\
-    dialog.cpp \
     globals.cpp \
-    notification.cpp \
-    networkclass.cpp \
     mainclass.cpp \
-    rpc_server.cpp
+    rpc_server.cpp \
+    replywindow.cpp \
+    notificationwindow.cpp \
+    connection_worker.cpp
 
 HEADERS  += \
-    dialog.h \
     globals.h \
-    notification.h \
-    networkclass.h \
     mainclass.h \
-    rpc_server.h
+    rpc_server.h \
+    replywindow.h \
+    notificationwindow.h \
+    connection_worker.h
 
 FORMS    += \
-    dialog.ui \
-    notification.ui
+    replywindow.ui \
+    notificationwindow.ui

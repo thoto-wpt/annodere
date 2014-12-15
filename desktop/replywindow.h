@@ -1,18 +1,16 @@
-#ifndef DIALOG_H
-#define DIALOG_H
+#ifndef REPLYWINDOW_H
+#define REPLYWINDOW_H
 
-#include <QDialog>
+#include <QWidget>
 #include<QString>
 #include<QPixmap>
-
 namespace Ui {
-class Dialog;
+class ReplyWindow;
 }
 
-class Dialog : public QDialog
+class ReplyWindow : public QWidget
 {
     Q_OBJECT
-
 private:
     QString contact;
     QPixmap image;
@@ -20,17 +18,20 @@ private:
     QString messages[];
 
 public:
-    explicit Dialog(QWidget *parent = 0);
-    ~Dialog();
-    void answer();
+    explicit ReplyWindow(QWidget *parent = 0);
+    ~ReplyWindow();
+    void send_reply();
+    void close();
+
+private:
+    Ui::ReplyWindow *ui;
 
 private slots:
     void on_pB_abbrechen_clicked();
 
     void on_pB_antworten_clicked();
-
-private:
-    Ui::Dialog *ui;
 };
 
-#endif // DIALOG_H
+#endif // REPLYWINDOW_H
+
+

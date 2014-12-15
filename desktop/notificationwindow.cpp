@@ -1,45 +1,64 @@
-#include "notification.h"
-#include "ui_notification.h"
+#include "notificationwindow.h"
+#include "ui_notificationwindow.h"
 #include "globals.h"
-#include "dialog.h"
+#include "replywindow.h"
+#include<QMessageBox> //jonas: später obsolet
 #include<QTime>
 #include<QString>
 
-Notification::Notification(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::Notification)
+NotificationWindow::NotificationWindow(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::NotificationWindow)
 {
+    //jonas: muss dann dynamisch gemacht werden: ein Objekt (pro eingehender Nachricht)
     ui->setupUi(this);
 
-    //jonas: setzen der Nachricht
+    //jonas: setzen der Nachricht (hier noch für den Dummy)
     QTime time = QTime::currentTime();
     QString stime = time.toString();
-    nachricht_string = stime + " Nachricht";
+    this->message = stime + " Nachricht";
 
-    ui->lbl_nachricht->setText(nachricht_string);
+    ui->lbl_nachricht->setText(this->message);
 
     //jonas: setzen des Logos und der Kontaktinformationen
     QGraphicsScene *scene = new QGraphicsScene();
-    QPixmap m("Logos/Whatsapp.jpg");
-    scene->setBackgroundBrush(m.scaled(50,50,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+    this->image.load("Logos/Whatsapp.jpg");
+    scene->setBackgroundBrush(this->image.scaled(50,50,Qt::KeepAspectRatio,Qt::SmoothTransformation));
     ui->gV_logo->setScene(scene);
 }
 
-Notification::~Notification()
+NotificationWindow::~NotificationWindow()
 {
     delete ui;
 }
 
-void Notification::answer()
+void NotificationWindow::answer()
 {
-
+    //jonas: dynamisch Objekt erzeugen
+    ReplyWindow dialog;
+    //dialog.setModal(true);
+    this->close(); //jonas: NotificationWindow zuerst schließen
+    dialog.show();
 }
 
-
-void Notification::on_pB_antworten_clicked()
+void NotificationWindow::close()
 {
-    Dialog dialog;
-    dialog.setModal(true);
-    this->close(); //jonas: mainwindow zuerst schließen
-    dialog.exec();
+  //jonas: bis jetzt wird das Fenster noch über das von Qt eingefügte X  am oberen Bildschirmrand
+  //geschlossen
 }
+
+void NotificationWindow::on_pB_antworten_clicked()
+{
+    NotificationWindow::answer();
+}
+
+QString NotificationWindow::get_message()
+{
+    return this->message;
+}
+
+void NotificationWindow::set_message(QString m)
+{
+    this->message = m;
+}
+

@@ -1,44 +1,44 @@
-#include "dialog.h"
-#include "ui_dialog.h"
+#include "replywindow.h"
+#include "ui_replywindow.h"
 #include "globals.h"
+#include "notificationwindow.h"
 #include<QMessageBox>
 #include<QTime>
 #include<QGraphicsScene>
 #include<QPixmap>
 
-Dialog::Dialog(QWidget *parent) :
-    QDialog(parent),
-    ui(new Ui::Dialog)
+ReplyWindow::ReplyWindow(QWidget *parent) :
+    QWidget(parent),
+    ui(new Ui::ReplyWindow)
 {
+    //muss dann dynamisch gemacht werden: ein neues Objekt pro Aufruf
     ui->setupUi(this);
 
+    //this->contact=;
+    //this->app_name=;
+
+    QGraphicsScene *scene = new QGraphicsScene();
+    this->image.load("Logos/Whatsapp.jpg");
+    scene->setBackgroundBrush(this->image.scaled(50,50,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+
+    //this->messages[0] = NotificationWindow::get_message(); jonas: stehe gerade auf dem Schlauch
+
+    //jonas: graphische Ausgabe
     ui->tE_nachrichten_verlauf->setText(nachricht_string);
     ui->pB_antworten->setDefault(true); //AntwortButton lässt sich mit Enter betätigen
     ui->tE_antwort->setFocus();
 
-    //jonas: setzen des Logos und der Kontaktinformationen
-    QGraphicsScene *scene = new QGraphicsScene();
-    QPixmap m("Logos/Whatsapp.jpg");
-    scene->setBackgroundBrush(m.scaled(50,50,Qt::KeepAspectRatio,Qt::SmoothTransformation));
+
     ui->gV_logo->setScene(scene);
 }
 
-Dialog::~Dialog()
+ReplyWindow::~ReplyWindow()
 {
     delete ui;
 }
 
-void Dialog::answer()
-{
 
-}
-
-void Dialog::on_pB_abbrechen_clicked()
-{
-    this->close();
-}
-
-void Dialog::on_pB_antworten_clicked()
+void ReplyWindow::send_reply()
 {
     if(ui->tE_antwort->toPlainText() != "") //jonas: leere Nachricht abfangen
     {
@@ -59,4 +59,19 @@ void Dialog::on_pB_antworten_clicked()
         msgBox.setWindowTitle("Fehler");
         msgBox.exec();
     }
+}
+
+void ReplyWindow::close()
+{
+    this->close(); //jonas: macht segmentation fault
+}
+
+void ReplyWindow::on_pB_abbrechen_clicked()
+{
+    ReplyWindow::close();
+}
+
+void ReplyWindow::on_pB_antworten_clicked()
+{
+   ReplyWindow::send_reply();
 }

@@ -1,32 +1,40 @@
 #ifndef NOTIFICATION_H
 #define NOTIFICATION_H
 
-#include <QDialog>
+#include <QWidget>
 #include<QString>
 #include<QPixmap>
 
 namespace Ui {
-class Notification;
+class NotificationWindow;
 }
 
-class Notification : public QDialog
+class NotificationWindow : public QWidget
 {
     Q_OBJECT
 private:
     QString contact;
     QPixmap image;
     QString app_name;
+    QString message;
 
 public:
-    explicit Notification(QWidget *parent = 0);
-    ~Notification();
+    explicit NotificationWindow(QWidget *parent = 0);
+    ~NotificationWindow();
     void answer();
+    void close();
+    QString get_message();
+    void set_message(QString m);
+
+    friend class ReplyWindow;
 
 private slots:
     void on_pB_antworten_clicked();
 
 private:
-    Ui::Notification *ui;
+    Ui::NotificationWindow *ui;
+
+
 };
 
-#endif // NOTIFICATION_H
+#endif // NOTIFICATIONWINDOW_H
