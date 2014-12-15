@@ -1,6 +1,5 @@
 #include "notificationwindow.h"
 #include "ui_notificationwindow.h"
-#include "globals.h"
 #include "replywindow.h"
 #include<QMessageBox> //jonas: später obsolet
 #include<QTime>

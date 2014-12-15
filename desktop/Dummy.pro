@@ -20,7 +20,6 @@ DESTDIR = $$PWD //Für relative Pfade
 
 
 SOURCES += main.cpp\
-    globals.cpp \
     mainclass.cpp \
     rpc_server.cpp \
     replywindow.cpp \
@@ -28,7 +27,6 @@ SOURCES += main.cpp\
     connection_worker.cpp
 
 HEADERS  += \
-    globals.h \
     mainclass.h \
     rpc_server.h \
     replywindow.h \
