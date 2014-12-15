@@ -35,10 +35,10 @@ NotificationWindow::~NotificationWindow()
 void NotificationWindow::answer()
 {
     //jonas: dynamisch Objekt erzeugen
-    ReplyWindow dialog;
-    //dialog.setModal(true);
-    this->close(); //jonas: NotificationWindow zuerst schließen
-    dialog.show();
+    ReplyWindow *dialog = new ReplyWindow;
+    this->hide(); //jonas: NotificationWindow zuerst schließen
+    dialog->show();
+
 }
 
 void NotificationWindow::close()

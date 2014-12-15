@@ -2,7 +2,7 @@
 #define REPLYWINDOW_H
 
 #include <QWidget>
-#include<QString>
+#include<QStringList>
 #include<QPixmap>
 namespace Ui {
 class ReplyWindow;
@@ -15,7 +15,7 @@ private:
     QString contact;
     QPixmap image;
     QString app_name;
-    QString messages[];
+    QStringList messages;
 
 public:
     explicit ReplyWindow(QWidget *parent = 0);

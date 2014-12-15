@@ -21,14 +21,14 @@ ReplyWindow::ReplyWindow(QWidget *parent) :
     this->image.load("Logos/Whatsapp.jpg");
     scene->setBackgroundBrush(this->image.scaled(50,50,Qt::KeepAspectRatio,Qt::SmoothTransformation));
 
-    //this->messages[0] = NotificationWindow::get_message(); jonas: stehe gerade auf dem Schlauch
+    QTime time = QTime::currentTime();
+    QString stime = time.toString();
+    this->messages << stime + " Nachricht";
 
     //jonas: graphische Ausgabe
-    ui->tE_nachrichten_verlauf->setText(nachricht_string);
+    ui->tE_nachrichten_verlauf->setText(this->messages[0]);
     ui->pB_antworten->setDefault(true); //AntwortButton lässt sich mit Enter betätigen
     ui->tE_antwort->setFocus();
-
-
     ui->gV_logo->setScene(scene);
 }
 
@@ -40,14 +40,19 @@ ReplyWindow::~ReplyWindow()
 
 void ReplyWindow::send_reply()
 {
+    QString tmp= "";
     if(ui->tE_antwort->toPlainText() != "") //jonas: leere Nachricht abfangen
     {
         QTime time = QTime::currentTime();
         QString stime = time.toString();
         QString antwort = stime + " " + ui->tE_antwort->toPlainText(); //antwort muss dann gesendet werden
 
-        nachricht_string = nachricht_string + "\n" +antwort;
-        ui->tE_nachrichten_verlauf->setText(nachricht_string);
+        this->messages << antwort;
+        for(int i = 0; i < this->messages.size(); i++)
+        {
+            tmp = tmp + this->messages[i] +"\n";
+        }
+        ui->tE_nachrichten_verlauf->setText(tmp);
         ui->tE_antwort->setText("");
     }
     else
@@ -63,7 +68,7 @@ void ReplyWindow::send_reply()
 
 void ReplyWindow::close()
 {
-    this->close(); //jonas: macht segmentation fault
+    this->hide(); //jonas: hier fehlt noch das beenden
 }
 
 void ReplyWindow::on_pB_abbrechen_clicked()

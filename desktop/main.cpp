@@ -10,8 +10,6 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     NotificationWindow w;
     w.show();
-    ReplyWindow r;
-    r.show();
 
     return a.exec();
 }
