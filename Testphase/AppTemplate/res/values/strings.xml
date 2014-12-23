@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="hello">Hello World, MainActivity!</string>
+    <string name="app_name">test</string>
+	<string name="buttontest">Testbutton</string>
+	<string name="label1">Label</string>
+	<string name="service_description">Dieser Service lässt Nachrichten abfangen, die in der Statusbar erscheinen.</string>
+	<string name="title">Titel</string>
+	<string name="texti">Text</string>
+	<string name="time">Zeit</string>
+
+</resources>
