@@ -9,5 +9,7 @@
 	<string name="title">Titel</string>
 	<string name="texti">Text</string>
 	<string name="time">Zeit</string>
+	<string name="buttontest2">Testbutton2</string>
+	<string name="info">Info</string>
 
 </resources>

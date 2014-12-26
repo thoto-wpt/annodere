@@ -16,6 +16,13 @@
 		android:text="@string/buttontest"
 		android:onClick="message"/>
 
+	<Button
+	    android:id="@+id/button1"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:text="@string/buttontest2"
+	    android:onClick="message2" />
+
 	<TextView
 	    android:id="@+id/title"
 	    android:layout_width="wrap_content"
@@ -33,5 +40,11 @@
 	    android:layout_width="wrap_content"
 	    android:layout_height="wrap_content"
 	    android:text="@string/time" />
+
+	<TextView
+	    android:id="@+id/info"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:text="@string/info" />
 	
 </LinearLayout>
