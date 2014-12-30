@@ -90,6 +90,9 @@ public class MainActivity extends Activity {
 							// TODO Auto-generated catch block
 							e.printStackTrace();
 						}
+				//zu Testzwecken:
+				        System.out.println("Title:            "  + notificationTitle);
+				        System.out.println("Text:             "  +notificationText);
 			}
 
 		}

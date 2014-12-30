@@ -17,66 +17,68 @@ public class Notification_worker extends NotificationListenerService {
 	@Override
 	public void onNotificationPosted(StatusBarNotification sbn) {
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-			System.out.println("KK-Version of onNotificationPosted() executed");
-			Notification mNotification = sbn.getNotification();
-			if (mNotification != null) {
-				System.out.println("Notification posted");
-				Bundle extras = mNotification.extras;
-				String notificationTitle = sbn.getPackageName() + ": "
-						+ extras.getString(Notification.EXTRA_TITLE);
-				String notificationText = extras
-						.getString(Notification.EXTRA_TEXT);
-				Intent intent = new Intent(
-						MainActivity.INTENT_ACTION_NOTIFICATION);
-				intent.putExtra("title", notificationTitle);
-				intent.putExtra("text", notificationText);
-				sendBroadcast(intent);
+			if (sbn.getPackageName() == "com.android.mms"
+					|| sbn.getPackageName() == "com.android.phone") {
+				Notification mNotification = sbn.getNotification();
+				if (mNotification != null) {
+					Bundle extras = mNotification.extras;
+					String notificationTitle = sbn.getPackageName() + ": "
+							+ extras.getString(Notification.EXTRA_TITLE);
+					String notificationText = extras
+							.getString(Notification.EXTRA_TEXT);
+					Intent intent = new Intent(
+							MainActivity.INTENT_ACTION_NOTIFICATION);
+					intent.putExtra("title", notificationTitle);
+					intent.putExtra("text", notificationText);
+					sendBroadcast(intent);
+				}
 			}
 		} else if (android.os.Build.VERSION.SDK_INT == android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
-			System.out.println("JB-Version of onNotificationPosted() executed");
-			Notification mNotification = sbn.getNotification();
-			if (mNotification != null) {
-				System.out.println("Notification posted");
-				RemoteViews views = mNotification.contentView;
-				Class secretClass = views.getClass();
-				try {
-					Map<Integer, String> text = new HashMap<Integer, String>();
-					Field outerFields[] = secretClass.getDeclaredFields();
-					for (int i = 0; i < outerFields.length; i++) {
-						if (!outerFields[i].getName().equals("mActions"))
-							continue;
-						outerFields[i].setAccessible(true);
-						@SuppressWarnings("unchecked")
-						ArrayList<Object> actions = (ArrayList<Object>) outerFields[i]
-								.get(views);
-						for (Object action : actions) {
-							Field innerFields[] = action.getClass()
-									.getDeclaredFields();
-							Object value = null;
-							Integer type = null;
-							Integer viewId = null;
-							for (Field field : innerFields) {
-								field.setAccessible(true);
-								if (field.getName().equals("value")) {
-									value = field.get(action);
-								} else if (field.getName().equals("type")) {
-									type = field.getInt(action);
-								} else if (field.getName().equals("viewId")) {
-									viewId = field.getInt(action);
+			if (sbn.getPackageName() == "com.android.mms"
+					|| sbn.getPackageName() == "com.android.phone") {
+				Notification mNotification = sbn.getNotification();
+				if (mNotification != null) {
+					RemoteViews views = mNotification.contentView;
+					Class secretClass = views.getClass();
+					try {
+						Map<Integer, String> text = new HashMap<Integer, String>();
+						Field outerFields[] = secretClass.getDeclaredFields();
+						for (int i = 0; i < outerFields.length; i++) {
+							if (!outerFields[i].getName().equals("mActions"))
+								continue;
+							outerFields[i].setAccessible(true);
+							@SuppressWarnings("unchecked")
+							ArrayList<Object> actions = (ArrayList<Object>) outerFields[i]
+									.get(views);
+							for (Object action : actions) {
+								Field innerFields[] = action.getClass()
+										.getDeclaredFields();
+								Object value = null;
+								Integer type = null;
+								Integer viewId = null;
+								for (Field field : innerFields) {
+									field.setAccessible(true);
+									if (field.getName().equals("value")) {
+										value = field.get(action);
+									} else if (field.getName().equals("type")) {
+										type = field.getInt(action);
+									} else if (field.getName().equals("viewId")) {
+										viewId = field.getInt(action);
+									}
 								}
+								if (type == 9 || type == 10) {
+									text.put(viewId, value.toString());
+								}
+								Intent intent = new Intent(
+										MainActivity.INTENT_ACTION_NOTIFICATION);
+								intent.putExtra("title", text.get(16908310));
+								intent.putExtra("text", text.get(16908358));
+								sendBroadcast(intent);
 							}
-							if (type == 9 || type == 10) {
-								text.put(viewId, value.toString());
-							}
-							Intent intent = new Intent(
-									MainActivity.INTENT_ACTION_NOTIFICATION);
-							intent.putExtra("title", text.get(16908310));
-							intent.putExtra("text", text.get(16908358));
-							sendBroadcast(intent);
 						}
+					} catch (Exception e) {
+						e.printStackTrace();
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
 				}
 			}
 		}
