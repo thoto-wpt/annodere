@@ -17,8 +17,8 @@ public class Notification_worker extends NotificationListenerService {
 	@Override
 	public void onNotificationPosted(StatusBarNotification sbn) {
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.KITKAT) {
-			if (sbn.getPackageName() == "com.android.mms"
-					|| sbn.getPackageName() == "com.android.phone") {
+			if (sbn.getPackageName().equals("com.android.mms")
+					|| sbn.getPackageName().equals("com.android.phone")) {
 				Notification mNotification = sbn.getNotification();
 				if (mNotification != null) {
 					Bundle extras = mNotification.extras;
@@ -34,8 +34,8 @@ public class Notification_worker extends NotificationListenerService {
 				}
 			}
 		} else if (android.os.Build.VERSION.SDK_INT == android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
-			if (sbn.getPackageName() == "com.android.mms"
-					|| sbn.getPackageName() == "com.android.phone") {
+			if (sbn.getPackageName().equals("com.android.mms")
+					|| sbn.getPackageName().equals("com.android.phone")) {
 				Notification mNotification = sbn.getNotification();
 				if (mNotification != null) {
 					RemoteViews views = mNotification.contentView;
