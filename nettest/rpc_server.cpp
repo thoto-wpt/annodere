@@ -27,15 +27,6 @@ namespace Annodere{
 		for(auto p: params){
 			if(!p.isConvertibleTo(arguments[i])) return false;
 		}
-
-/*		if(num_params!=def.num_params) return false;
-		auto dp=(def.params)->begin();
-		for(auto p: *params){
-//		for(int i=0;i<num_params;i++){
-//			if(!params[i].isConvertibleTo(def.params[i].type())) return false;
-			if(p.isConvertibleTo((*dp).type())) return false;
-			dp++;
-		}*/
 		return true; 
 	}
 
@@ -175,16 +166,6 @@ namespace Annodere{
 	}
 
 	/**
-	 * TODO
-	 **/
-	void* Rpc_server::get_key(void* cls, enum MHD_ValueKind kind,
-			const char* c_key, const char* c_value){
-		//...
-		UNUSED(cls); UNUSED(kind); UNUSED(c_key); UNUSED(c_value);
-		return nullptr;
-	}
-
-	/**
 	 * Handles every HTTP request to MHD server instance
 	 **/
 	int Rpc_server::handler(struct MHD_Connection* connection,
@@ -226,45 +207,7 @@ namespace Annodere{
 					delete call;
 				}
 			}
-
-
-/*
-		Json::Reader json_reader;
-		Json::Value json_root;
-		string request;
-
-			if(upload_data!=NULL) // C!
-				request=string(upload_data, *upload_data_size);
-			else request="EMPTY"; 
-			printf("\trequest: %s\n", request.c_str());
-			if(!json_reader.parse("{ \"jsonrpc\": \"2.0\", \"method\": \"foo\", \"params\": [123, \"foo\"], \"id\": null }", json_root, false)){
-				printf("\tParse Error:\n");
-				data=generate_error(err_parse);
-				code=404;
-			}
-			else{
-				Rpc_call call=get_method(json_root);
-				string method=call.method;
-				if(call.err!=0x00) {
-					printf("\tError:\n");
-					data=generate_error(call.err);
-					code=400;
-				}else {
-					printf("\tMethod: %s\n", method.c_str());
-					if(call.params==nullptr) printf("\tno parameters given.\n");
-					else{
-						for(auto p: *call.params){
-							if(p.isInt()) printf("0x%x, ",p.asInt());
-							else printf("%s, ",p.asString().c_str());
-						}
-						printf("EOL \n");
-					}
-
-					data="{state:true}";
-					code=200;
-				}
-			}*/
-		}else{
+		}else{ // this is not a rpc call
 			printf("\t404\n");
 			data=generate_error(err_parse);
 			code=404;
@@ -273,7 +216,6 @@ namespace Annodere{
 		response=MHD_create_response_from_buffer(data.length(),
 			reinterpret_cast<void*>(const_cast<char*>(data.c_str())),
 			MHD_RESPMEM_MUST_COPY);
-			//MHD_RESPMEM_PERSISTENT);
 		if(MHD_add_response_header(response,"Content-type","application/json")
 			==MHD_NO) printf("EEH resp head\n");
 		ret=MHD_queue_response(connection, code, response);
@@ -317,9 +259,6 @@ namespace Annodere{
 		mhd_daemon=MHD_start_daemon(
 			MHD_USE_SELECT_INTERNALLY|MHD_USE_IPv6|MHD_USE_PEDANTIC_CHECKS,
 			port, nullptr, nullptr, c_handler, this, MHD_OPTION_END);
-			/* port, nullptr, nullptr,
-			reinterpret_cast<MHD_AccessHandlerCallback>(&Rpc_server::handler),
-			this, MHD_OPTION_END);*/
 		if(mhd_daemon==nullptr) 
 			printf("EEH: Daemon initialisation failed\n"); 
 	}

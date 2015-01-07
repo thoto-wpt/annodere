@@ -39,7 +39,6 @@ namespace Annodere{
 			Rpc_call(Json::Value);
 			~Rpc_call(){ if(params!=nullptr) delete params; }
 
-
 			string method;
 			Json::Value* params;
 			bool id_is_null;
@@ -72,7 +71,6 @@ namespace Annodere{
 				const char* cc_url, const char* method, const char* version,
 				const char* upload_data, size_t* upload_data_size,
 				void ** con_cls);
-			void* get_key(void*, enum MHD_ValueKind, const char*, const char*);
 			string generate_error(signed int code);
 			struct MHD_Daemon* mhd_daemon;
 			int port;
