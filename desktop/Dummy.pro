@@ -1,10 +1,8 @@
 #-------------------------------------------------
 #
 # Project created by QtCreator 2014-11-10T14:37:04
-#
-#-------------------------------------------------
-
- QT -= gui
+# #------------------------------------------------- 
+# QT -= gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -21,18 +19,25 @@ DESTDIR = $$PWD //Für relative Pfade
 
 SOURCES += main.cpp\
     mainclass.cpp \
-    rpc_server.cpp \
     replywindow.cpp \
     notificationwindow.cpp \
-    connection_worker.cpp
+    rpc/rpc_server.cpp \
+    rpc/connection_worker.cpp
+#    connection_worker.cpp
 
 HEADERS  += \
     mainclass.h \
-    rpc_server.h \
     replywindow.h \
     notificationwindow.h \
-    connection_worker.h
+    rpc/rpc_server.h \
+    rpc/connection_worker.h
+#     connection_worker.h
 
 FORMS    += \
     replywindow.ui \
     notificationwindow.ui
+
+LIBS += -lmicrohttpd -ljsoncpp
+QMAKE_CXXFLAGS += -g -Wall -Wunused -Wextra -pedantic -std=c++11
+QMAKE_CXXFLAGS_RELEASE += -std=c++11
+

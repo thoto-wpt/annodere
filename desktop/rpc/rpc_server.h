@@ -128,16 +128,4 @@ namespace Annodere{
 			Rpc_server(const int port=10080);
 			~Rpc_server();
 	};
-
-	class Connection_worker{
-		private:
-			Rpc_server rpc_server;
-			Rpc_method_wait* method_wait;
-			Rpc_method_register* method_register;
-		public:
-			Connection_worker();
-			~Connection_worker();
-			void reply(string);
-			static void get_notification(string);
-	};
 }

@@ -56,8 +56,11 @@ QString NotificationWindow::get_message()
     return this->message;
 }
 
-void NotificationWindow::set_message(QString m)
-{
+void NotificationWindow::set_message(QString m){
     this->message = m;
+}
+
+void NotificationWindow::set_message(std::string m){
+    set_message(QString(m.c_str()));
 }
 
