@@ -1,14 +1,15 @@
 LDFLAGS+= -lmicrohttpd -ljsoncpp
 CXXFLAGS+= -g -Wall -Wunused -Wextra -pedantic -std=c++11
 
-rpcmain: rpc_server.o main.o
+rpctest: rpc_server.o test.o
 	$(CXX) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-main.o: rpc_server.h
+test.o: rpc_server.h
 
 rpc_server.o: rpc_server.h
 
-all: rpcmain
+all: rpc_server.o
 
 clean:
-	rm *.o rpcmain
+	rm *.o
+	test -f rpctest && rm rpctest
