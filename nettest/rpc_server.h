@@ -5,11 +5,13 @@ extern "C"{
 // #include<sys/select.h>
 // #include<sys/socket.h>
 #include<microhttpd.h>
+#include<pthread.h>
 #ifdef __cplusplus
 }
 #endif
 #include<string>
 #include<queue>
+#include<unordered_map>
 #include<jsoncpp/json/json.h>
 
 #define UNUSED(expr) (void)(expr)
@@ -19,30 +21,55 @@ namespace Annodere{
 
 	class Rpc_method{
 		public:
-			const string name;
-			const vector<Json::ValueType> arguments;
-			virtual Json::Value call(Json::Value)=0;
+			virtual string get_name()=0;
+			virtual vector<Json::ValueType> get_arguments()=0;
+			virtual string call(Json::Value&,Json::Value&){return "";};
+			virtual ~Rpc_method(){};
 			bool compatible(Json::Value& params);
+		protected:
+			string generate_result(Json::Value&, Json::Value&);
 	};
 
 	class Rpc_method_register: public Rpc_method{
 		public:
-			const string name="register";
-			const vector<Json::ValueType> arguments=
-				{Json::intValue,Json::stringValue};
-			Json::Value call(Json::Value);
+			string get_name(){return "register";};
+			vector<Json::ValueType> get_arguments(){
+				vector<Json::ValueType> a={Json::stringValue};
+				return a;
+			};
+
+			string call(Json::Value&, Json::Value&);
 	};
+	class Rpc_method_wait: public Rpc_method{
+		private:
+			string reply;
+			pthread_mutex_t* pmutti;
+			pthread_cond_t* pcondi;
+		public:
+			Rpc_method_wait();
+			~Rpc_method_wait();
+			string get_name(){return "wait";};
+			vector<Json::ValueType> get_arguments(){
+				vector<Json::ValueType> a={Json::nullValue};
+				return a;
+			};
+
+			string call(Json::Value&, Json::Value&);
+			void send_reply(string);
+	};
+
 
 	class Rpc_call{
 		public:
 			Rpc_call();
 			Rpc_call(Json::Value);
-			~Rpc_call(){ if(params!=nullptr) delete params; }
+			virtual ~Rpc_call(){
+				 if(params!=nullptr) delete params; }
 
 			string method;
 			Json::Value* params;
 			bool id_is_null;
-			string id;
+			// string id;
 			Json::Value jv_id;
 
 			int process(const char*,size_t);
@@ -66,15 +93,18 @@ namespace Annodere{
 	class Rpc_server{
 		private:
 			Rpc_call get_method(Json::Value &call);
-			//static int handler(void *cls, struct MHD_Connection* connection,
 			int handler(struct MHD_Connection* connection,
 				const char* cc_url, const char* method, const char* version,
 				const char* upload_data, size_t* upload_data_size,
 				void ** con_cls);
-			string generate_error(signed int code);
 			struct MHD_Daemon* mhd_daemon;
 			int port;
+			//unordered_multimap<string,Rpc_method*> methods;
+			unordered_map<string,Rpc_method*> methods;
+			string dispatch(string,Json::Value,Json::Value);
 		public:
+			void register_method(Rpc_method*);
+			static string generate_error(signed int code);
 			static const signed int err_parse=-32700;
 			static const signed int err_method=-32601;
 			static const signed int err_request=-32600;
@@ -82,5 +112,16 @@ namespace Annodere{
 			static const signed int err_internal=-32603;
 			Rpc_server(int port=10080);
 			~Rpc_server();
+	};
+
+	class Connection_worker{
+		private:
+			Rpc_server rpc_server;
+			Rpc_method_wait* method_wait;
+			Rpc_method_register* method_register;
+		public:
+			Connection_worker();
+			~Connection_worker();
+			void reply(string);
 	};
 }

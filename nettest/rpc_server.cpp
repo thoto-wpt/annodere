@@ -1,16 +1,89 @@
 #include"rpc_server.h"
 #include<cassert>
 #include<cstring>
+#include<stdexcept>
 
 namespace Annodere{
 	using namespace std;
 
+	string init_auth_token="1234";
+	string init_sess_token;
+
+	/**
+	 * Generate valid response of method
+	 * @returns string to be sent back
+	 **/
+	string Rpc_method::generate_result(Json::Value &id, Json::Value &result){
+		static Json::FastWriter writer;
+		Json::Value reply(Json::objectValue);
+		reply["result"]=result;
+		reply["id"]=id;
+		reply["jsonrpc"]="2.0";
+		return writer.write(reply);
+	}
+
 	/**
 	 * Method call to register client to server
-	 * @returns token
+	 * @returns token / negative int value on failure
 	 **/
-	Json::Value Rpc_method_register::call(Json::Value){
-		return nullptr;
+	string Rpc_method_register::call(Json::Value &val,Json::Value& id){
+		Json::Value ret;
+		if(init_auth_token.empty()) ret=-2;
+		else if(val[0]==init_auth_token){
+			//generate session token
+			init_sess_token.resize(33);
+			for(int i=0;i<32;i++){
+				init_sess_token[i]=(rand()%74)+0x30;
+			}
+			ret=init_sess_token;
+			printf("Session token: %s \n",init_sess_token.c_str());
+		}else {
+			ret=-1;
+		}
+		return generate_result(id, ret);
+	}
+
+	Rpc_method_wait::Rpc_method_wait(){
+		pmutti=(pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
+		pcondi=(pthread_cond_t*)malloc(sizeof(pthread_cond_t));
+		pthread_mutex_init(pmutti,NULL);
+		pthread_cond_init(pcondi,NULL);
+	}
+
+	Rpc_method_wait::~Rpc_method_wait(){
+		free(pmutti); free(pcondi);
+	}
+
+	/**
+	 * Wait for message to be recieved by phone
+	 * @returns null if no reply was sent or message to send
+	 **/
+	string Rpc_method_wait::call(Json::Value &val,Json::Value& id){
+		UNUSED(val);
+		Json::Value ret;
+
+		// time definition to abort wait in order to handle session timeout
+		struct timeval now;
+		struct timespec timeout;
+		gettimeofday(&now,NULL);
+		timeout.tv_sec=now.tv_sec+6; // wait 60 seconds
+		timeout.tv_nsec=now.tv_usec*1000;
+
+		pthread_mutex_lock(pmutti);
+		if(pthread_cond_timedwait(pcondi,pmutti,&timeout)==0x00){
+			ret=Rpc_method_wait::reply;
+		}else ret=Json::nullValue;
+		pthread_mutex_unlock(pmutti);
+
+		return generate_result(id, ret);
+	}
+	void Rpc_method_wait::send_reply(string message){
+		if(pmutti!=nullptr&&pcondi!=nullptr){
+			pthread_mutex_lock(pmutti);
+			reply=message;
+			pthread_mutex_unlock(pmutti);
+			pthread_cond_broadcast(pcondi);
+		}
 	}
 
 	/**
@@ -18,7 +91,8 @@ namespace Annodere{
 	 * @returns true if you may run this method call
 	 **/
 	bool Rpc_method::compatible(Json::Value& params) {
-		if(params==nullptr && arguments.size()==0) return true;
+		auto arguments=get_arguments();
+		if(params.isNull() && arguments.size()==0) return true;
 		else if(!params.isArray())
 			return arguments.size()==1&&params.isConvertibleTo(arguments[0]);
 		if(params.size()!=arguments.size()) return false;
@@ -138,13 +212,17 @@ namespace Annodere{
 		else method=jv_method.asString();
 
 		// id must be present as null value or as unsigned integer or string
-		if(jv_id.isString()||jv_id.isUInt()) id=jv_id.asString();
+/*		if(jv_id.isString()||jv_id.isUInt()) id=jv_id.asString();
 		else if(jv_id.isNull()) id_is_null=true;
-		else return Rpc_server::err_request;
+		else return Rpc_server::err_request;*/
+		if(jv_id.isNull()) id_is_null=true;
+		else if(!jv_id.isString()&&!jv_id.isUInt())
+			 return Rpc_server::err_request;
 
 		// there may be parameters
-		if(jv_params.isArray()) params=new Json::Value(jv_params);
-		else if(jv_params.isNull()) params=nullptr;
+		if(jv_params.isArray()||jv_params.isNull())
+			params=new Json::Value(jv_params);
+		else params=new Json::Value(nullptr); // FIXME
 		return 0x00;
 	}
 
@@ -166,6 +244,38 @@ namespace Annodere{
 	}
 
 	/**
+	 * dispatches method call
+	 * a method will be called on its object used at register_method call
+	 * TODO: call multiple methods with different signatures but same name
+	 * @params name method name
+	 * @params params parameters for method call
+	 * @params id ID of method call in JSON-RPC request
+	 * @returns result string
+	 **/
+	string Rpc_server::dispatch(string name,Json::Value params,Json::Value id){
+		Rpc_method* m;
+		try{ // find method
+			m=methods.at(name);
+		}catch(const std::out_of_range oor){ //method not found
+			return generate_error(err_method);
+		}
+
+		// check compatibility of parameters
+		if(m->compatible(params)) return m->call(params, id);
+		else return generate_error(err_params);
+	}
+
+	/**
+	 * register method to RPC server
+	 * @params m pointer to Rpc_method
+	 **/
+	void Rpc_server::register_method(Rpc_method* m){
+		pair<string,Rpc_method*> element(m->get_name(),m);
+		methods.insert(element);
+		printf("Method registered: %s\n",m->get_name().c_str()); // FIXME: rem
+	}
+
+	/**
 	 * Handles every HTTP request to MHD server instance
 	 **/
 	int Rpc_server::handler(struct MHD_Connection* connection,
@@ -173,17 +283,15 @@ namespace Annodere{
 			const char* version, const char* upload_data,
 			size_t* upload_data_size, void ** con_cls){
 		UNUSED(method); UNUSED(version);
-		UNUSED(upload_data); UNUSED(upload_data_size); UNUSED(con_cls);
 
 		struct MHD_Response* response;
 		int ret;
 		string data; int code;
 
-
 		string url=c_url;
 		if(url=="/annodere"){
 			if(*con_cls==NULL){ // new call: create Rpc_call
-				printf("URL: %s, %d\n",url.c_str(),port);
+				printf("URL: %s, %d\n",url.c_str(),port); // FIXME: rem
 				Rpc_call* call=new Rpc_call();
 				*con_cls=static_cast<void*>(call);
 				return MHD_YES;
@@ -197,13 +305,14 @@ namespace Annodere{
 				}else{ // recieving post data finished: process request.
 					signed int err;
 					if((err=call->parse())==0x00){
-						data="{state:true}";
+//						data="{state:true}";
+						data=dispatch(call->method,*(call->params),call->jv_id);
 						code=200;
 					}else{
 						data=generate_error(err);
 						code=422;
 					}
-					printf("\t%s\n",(call->get_json_rpc()).c_str());
+					printf("\t%s\n",(call->get_json_rpc()).c_str()); //FIXME:rem
 					delete call;
 				}
 			}
@@ -223,6 +332,13 @@ namespace Annodere{
 
 		return ret; 
 	}
+
+	/**
+	 * return JSON reply for given numeric error id
+	 * @params code numeric error id (one of err_parse, err_method, err_request
+	 *  err_params or err_internal)
+	 * @returns JSON string (not generated by jsoncpp library)
+	 **/
 	string Rpc_server::generate_error(signed int code){
 		string err="{\"jsonrpc\": \"2.0\", \"error\": {\"code\": ";
 		string err2=", \"message\": \"";
@@ -239,12 +355,16 @@ namespace Annodere{
 			default:
 			case err_internal: //-32603:
 				err+=to_string(code)+err2+"Internal error"+err3; break;
+//-32000: to -32099 	Server error 
+// Reserved for implementation-defined server-errors.
 		}
 		return err;
 	}
-		
-	//-32000: to -32099 	Server error 	Reserved for implementation-defined server-errors.
 
+	/**
+	 * create new RPC server
+	 * @params port TCP port to listen on
+	 **/
 	Rpc_server::Rpc_server(int pport):port(pport){
 		MHD_AccessHandlerCallback c_handler=
 			[](void* cls, struct MHD_Connection* connection,
@@ -257,12 +377,34 @@ namespace Annodere{
 			};
 
 		mhd_daemon=MHD_start_daemon(
-			MHD_USE_SELECT_INTERNALLY|MHD_USE_IPv6|MHD_USE_PEDANTIC_CHECKS,
+			MHD_USE_THREAD_PER_CONNECTION|MHD_USE_IPv6|MHD_USE_PEDANTIC_CHECKS,
 			port, nullptr, nullptr, c_handler, this, MHD_OPTION_END);
-		if(mhd_daemon==nullptr) 
-			printf("EEH: Daemon initialisation failed\n"); 
+		if(mhd_daemon==nullptr)
+			printf("EEH: Daemon initialisation failed\n");
 	}
+
+	/**
+	 * stop RPC server and destroy all methods used
+	 **/
 	Rpc_server::~Rpc_server(){
 		MHD_stop_daemon(mhd_daemon);
+		for(auto m: methods){
+			delete m.second;
+		}
+	}
+
+	Connection_worker::Connection_worker(): rpc_server() {
+		method_wait=new Rpc_method_wait();
+		rpc_server.register_method(new Rpc_method_register());
+		rpc_server.register_method(method_wait);
+	}
+	Connection_worker::~Connection_worker(){}
+
+	/**
+	 * send reply to clients via rpc wait reply
+	 * @params msg message to send
+	 **/
+	void Connection_worker::reply(string msg){
+		method_wait->send_reply(msg);
 	}
 }
