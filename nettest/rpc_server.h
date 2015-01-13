@@ -12,6 +12,7 @@ extern "C"{
 #include<string>
 #include<queue>
 #include<unordered_map>
+#include<functional>
 #include<jsoncpp/json/json.h>
 
 #define UNUSED(expr) (void)(expr)
@@ -28,6 +29,20 @@ namespace Annodere{
 			bool compatible(Json::Value& params);
 		protected:
 			string generate_result(Json::Value&, Json::Value&);
+	};
+
+	class Rpc_method_notify: public Rpc_method{
+		private:
+			function<void (const string)> callback;
+		public:
+			Rpc_method_notify(function<void (const string)> cb);
+			string get_name(){return "notify";};
+			vector<Json::ValueType> get_arguments(){
+				vector<Json::ValueType> a={Json::stringValue,Json::stringValue};
+				return a;
+			};
+
+			string call(Json::Value&, Json::Value&);
 	};
 
 	class Rpc_method_register: public Rpc_method{
@@ -50,7 +65,7 @@ namespace Annodere{
 			~Rpc_method_wait();
 			string get_name(){return "wait";};
 			vector<Json::ValueType> get_arguments(){
-				vector<Json::ValueType> a={Json::nullValue};
+				vector<Json::ValueType> a={Json::stringValue};
 				return a;
 			};
 
@@ -69,7 +84,6 @@ namespace Annodere{
 			string method;
 			Json::Value* params;
 			bool id_is_null;
-			// string id;
 			Json::Value jv_id;
 
 			int process(const char*,size_t);
@@ -123,5 +137,6 @@ namespace Annodere{
 			Connection_worker();
 			~Connection_worker();
 			void reply(string);
+			static void get_notification(string);
 	};
 }

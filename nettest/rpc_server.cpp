@@ -36,6 +36,7 @@ namespace Annodere{
 				init_sess_token[i]=(rand()%74)+0x30;
 			}
 			ret=init_sess_token;
+			init_auth_token="";
 			printf("Session token: %s \n",init_sess_token.c_str());
 		}else {
 			ret=-1;
@@ -43,6 +44,9 @@ namespace Annodere{
 		return generate_result(id, ret);
 	}
 
+	/**
+	 * constructor for wait RPC call. Intializes IPC mutexes
+	 **/
 	Rpc_method_wait::Rpc_method_wait(){
 		pmutti=(pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
 		pcondi=(pthread_cond_t*)malloc(sizeof(pthread_cond_t));
@@ -59,24 +63,33 @@ namespace Annodere{
 	 * @returns null if no reply was sent or message to send
 	 **/
 	string Rpc_method_wait::call(Json::Value &val,Json::Value& id){
-		UNUSED(val);
 		Json::Value ret;
 
-		// time definition to abort wait in order to handle session timeout
-		struct timeval now;
-		struct timespec timeout;
-		gettimeofday(&now,NULL);
-		timeout.tv_sec=now.tv_sec+6; // wait 60 seconds
-		timeout.tv_nsec=now.tv_usec*1000;
+		if(val[0]==init_sess_token){
+			// time definition to abort wait in order to handle session timeout
+			struct timeval now;
+			struct timespec timeout;
+			gettimeofday(&now,NULL);
+			timeout.tv_sec=now.tv_sec+6; // wait 60 seconds
+			timeout.tv_nsec=now.tv_usec*1000;
 
-		pthread_mutex_lock(pmutti);
-		if(pthread_cond_timedwait(pcondi,pmutti,&timeout)==0x00){
-			ret=Rpc_method_wait::reply;
+			pthread_mutex_lock(pmutti);
+			if(!reply.empty() || // there is a message pending or ...
+					//message was recieved
+					pthread_cond_timedwait(pcondi,pmutti,&timeout)==0x00){
+				ret=reply;
+				reply="";
+			}else ret=Json::nullValue;
+			pthread_mutex_unlock(pmutti);
 		}else ret=Json::nullValue;
-		pthread_mutex_unlock(pmutti);
 
 		return generate_result(id, ret);
 	}
+
+	/**
+	 * Send reply to every waiting client (session)
+	 * @params message message to be sent do client
+	 **/
 	void Rpc_method_wait::send_reply(string message){
 		if(pmutti!=nullptr&&pcondi!=nullptr){
 			pthread_mutex_lock(pmutti);
@@ -84,6 +97,30 @@ namespace Annodere{
 			pthread_mutex_unlock(pmutti);
 			pthread_cond_broadcast(pcondi);
 		}
+	}
+
+	/**
+	 * Constructor of notify method, which is called by the client if the
+	 * desktop should display a notifcation. Must recieve callback to call
+	 * when message arrives.
+	 * @params cb Callback method to display notification
+	 **/
+	Rpc_method_notify::Rpc_method_notify(function<void (const string)> cb){
+		callback=cb;
+	}
+
+	/**
+	 * RPC-method to recieve notification and display it
+	 **/
+	string Rpc_method_notify::call(Json::Value &val,Json::Value& id){
+		Json::Value ret;
+
+		if(val[0]==init_sess_token){
+			callback(val[1].asString());
+			ret=true;
+		}else ret=Json::nullValue;
+
+		return generate_result(id, ret);
 	}
 
 	/**
@@ -197,6 +234,10 @@ namespace Annodere{
 		}else return json_parse();
 	}
 
+	/**
+	 * Parses json data of call and extracts method and params
+	 * @returns error code or 0x00 on success
+	 **/
 	signed int Rpc_call::json_parse(){
 		Json::Value jv_version=json_root["jsonrpc"];
 		jv_id=json_root["id"]; // declared at object
@@ -212,9 +253,6 @@ namespace Annodere{
 		else method=jv_method.asString();
 
 		// id must be present as null value or as unsigned integer or string
-/*		if(jv_id.isString()||jv_id.isUInt()) id=jv_id.asString();
-		else if(jv_id.isNull()) id_is_null=true;
-		else return Rpc_server::err_request;*/
 		if(jv_id.isNull()) id_is_null=true;
 		else if(!jv_id.isString()&&!jv_id.isUInt())
 			 return Rpc_server::err_request;
@@ -222,7 +260,7 @@ namespace Annodere{
 		// there may be parameters
 		if(jv_params.isArray()||jv_params.isNull())
 			params=new Json::Value(jv_params);
-		else params=new Json::Value(nullptr); // FIXME
+		else params=new Json::Value(Json::nullValue);
 		return 0x00;
 	}
 
@@ -235,6 +273,7 @@ namespace Annodere{
 
 	/**
 	 * Rpc_call constructor for multi method calls
+	 * FIXME: test this function and implement further requirements in parser
 	 **/
 	Rpc_call::Rpc_call(Json::Value val) : id_is_null(false),post_size(0),
 			call_num(0){
@@ -272,7 +311,6 @@ namespace Annodere{
 	void Rpc_server::register_method(Rpc_method* m){
 		pair<string,Rpc_method*> element(m->get_name(),m);
 		methods.insert(element);
-		printf("Method registered: %s\n",m->get_name().c_str()); // FIXME: rem
 	}
 
 	/**
@@ -305,14 +343,13 @@ namespace Annodere{
 				}else{ // recieving post data finished: process request.
 					signed int err;
 					if((err=call->parse())==0x00){
-//						data="{state:true}";
 						data=dispatch(call->method,*(call->params),call->jv_id);
 						code=200;
 					}else{
 						data=generate_error(err);
 						code=422;
 					}
-					printf("\t%s\n",(call->get_json_rpc()).c_str()); //FIXME:rem
+//					printf("\t%s\n",(call->get_json_rpc()).c_str());
 					delete call;
 				}
 			}
@@ -393,10 +430,15 @@ namespace Annodere{
 		}
 	}
 
+	/**
+	 * Constructor of connection_worker. Creates RPC server and registers
+	 * methods to it.
+	 **/
 	Connection_worker::Connection_worker(): rpc_server() {
 		method_wait=new Rpc_method_wait();
 		rpc_server.register_method(new Rpc_method_register());
 		rpc_server.register_method(method_wait);
+		rpc_server.register_method(new Rpc_method_notify(get_notification));
 	}
 	Connection_worker::~Connection_worker(){}
 
@@ -406,5 +448,13 @@ namespace Annodere{
 	 **/
 	void Connection_worker::reply(string msg){
 		method_wait->send_reply(msg);
+	}
+
+	/**
+	 * handle notification
+	 * @params msg message recieved
+	 **/
+	void Connection_worker::get_notification(string msg){
+		printf("got message: %s\n",msg.c_str());
 	}
 }
