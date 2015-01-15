@@ -107,6 +107,7 @@ namespace Annodere{
 	class Rpc_server{
 		private:
 			struct MHD_Daemon* mhd_daemon;
+			struct MHD_Daemon* mhd_daemon_legacy;
 			int port;
 			//unordered_multimap<string,Rpc_method*> methods;
 			unordered_map<string,Rpc_method*> methods;
