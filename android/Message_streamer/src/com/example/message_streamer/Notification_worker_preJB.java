@@ -9,6 +9,7 @@ import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Notification;
 import android.content.Intent;
+import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.RemoteViews;
 import android.widget.Toast;
@@ -20,8 +21,17 @@ public class Notification_worker_preJB extends AccessibilityService {
 		if (event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
 			if (event.getPackageName().equals("com.android.mms")
 					|| event.getPackageName().equals("com.android.phone")) {
-				Notification notification = (Notification) event
-						.getParcelableData();
+				Notification notification = (Notification) event.getParcelableData();
+				
+				String nachricht;
+				Log.d("tos", "toString");
+				nachricht = notification.tickerText.toString();
+				Log.d("text", nachricht);
+				Intent intent = new Intent(MainActivity.INTENT_ACTION_NOTIFICATION);
+				intent.putExtra("tickertext", nachricht);	
+				Log.d("Intent", intent.toString());
+				Log.d("vBr", "In JB-worker");
+				sendBroadcast(intent);
 
 				/*
 				 * // Unwichtige, aber interessante Details: Log.d("INC",
@@ -38,14 +48,14 @@ public class Notification_worker_preJB extends AccessibilityService {
 				// System.out.println(notificationList); // Möglichkeiten über
 				// Möglichkeiten ...
 
-				System.out.println(notification); // So sieht die normale, nicht
+				//System.out.println(notification); // So sieht die normale, nicht
 													// geparste Version aus.
 
 				// Parser:
 				// http://stackoverflow.com/questions/9292032/extract-notification-text-from-parcelable-contentview-or-contentintent
 				// unterster Beitrag
 
-				RemoteViews views = notification.contentView;
+				/*RemoteViews views = notification.contentView;
 				Class secretClass = views.getClass();
 
 				try {
@@ -94,12 +104,12 @@ public class Notification_worker_preJB extends AccessibilityService {
 					intent.putExtra("title", text.get(16908310));
 					intent.putExtra("text", text.get(16908358));
 					sendBroadcast(intent);
-
+*/
 				}
 
-				catch (Exception e) {
-					e.printStackTrace();
-				}
+				//catch (Exception e) {
+				//	e.printStackTrace();
+				//}
 
 				// Das oben zeigt an, was ich bisher auslesen kann
 				// Die Daten sind aber noch verschlüsselt in den Paketen =>
@@ -123,7 +133,7 @@ public class Notification_worker_preJB extends AccessibilityService {
 				 */
 
 			}
-		}
+		
 	}
 
 	@Override
