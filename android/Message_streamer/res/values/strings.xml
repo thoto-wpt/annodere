@@ -7,5 +7,6 @@
     <string name="activate">Zum Aktivieren den Bildschirm berühren</string>
     <string name="service_description">Dieser Service lässt Nachrichten abfangen, die in der Statusbar erscheinen.</string>
     <string name="options">Einstellungen</string>
+    <string name="connect">Verbinden</string>
 
 </resources>

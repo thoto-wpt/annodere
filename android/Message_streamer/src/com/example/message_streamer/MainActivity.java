@@ -13,10 +13,13 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 
 public class MainActivity extends Activity {
 	protected Noti_receiver nReceiver = new Noti_receiver();
-	public static final String INTENT_ACTION_NOTIFICATION = "com.example.Message_streamer";
+	public static final String INTENT_ACTION_NOTIFICATION = 
+			"com.example.Message_streamer";
+	private connection_worker cw;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -59,7 +62,8 @@ public class MainActivity extends Activity {
 	}
 
 	public void de_activate(View view) {
-		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+		if (android.os.Build.VERSION.SDK_INT 
+				>= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			Intent intent = new Intent(
 					"android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
 			startActivity(intent);
@@ -69,6 +73,10 @@ public class MainActivity extends Activity {
 	public void options(View view) {
 		Intent intent = new Intent(this, OptionsActivity.class);
 		startActivity(intent);
+	}
+	public void connect(View view){
+		EditText edip=(EditText) findViewById(R.id.editTextIP);
+		cw=new connection_worker(this,edip.getText().toString(),"1234");
 	}
 
 	public class Noti_receiver extends BroadcastReceiver {
@@ -91,8 +99,10 @@ public class MainActivity extends Activity {
 							e.printStackTrace();
 						}
 				//zu Testzwecken:
-				        System.out.println("Title:            "  + notificationTitle);
-				        System.out.println("Text:             "  +notificationText);
+				System.out.println("Title:            "  + notificationTitle);
+				System.out.println("Text:             "  +notificationText);
+				cw.send_notification("NOTIFY: "+notificationTitle+" "
+						+notificationText);
 			}
 
 		}
