@@ -363,9 +363,14 @@ namespace Annodere{
 			code=404;
 		}
 
+#if MHD_VERSION > 0x00093901
 		response=MHD_create_response_from_buffer(data.length(),
 			reinterpret_cast<void*>(const_cast<char*>(data.c_str())),
-			MHD_RESPMEM_MUST_COPY);
+            MHD_RESPMEM_MUST_COPY);
+#else
+        response=MHD_create_response_from_data(data.length(),
+            reinterpret_cast<void*>(const_cast<char*>(data.c_str())),0,1);
+#endif
 		if(MHD_add_response_header(response,"Content-type","application/json")
 			==MHD_NO) printf("EEH resp head\n");
 		ret=MHD_queue_response(connection, code, response);
