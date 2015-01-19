@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
+import android.util.Log;
 import android.widget.RemoteViews;
 
 public class Notification_worker extends NotificationListenerService {
@@ -30,10 +31,14 @@ public class Notification_worker extends NotificationListenerService {
 							MainActivity.INTENT_ACTION_NOTIFICATION);
 					intent.putExtra("title", notificationTitle);
 					intent.putExtra("text", notificationText);
+					
+					Log.d("INC", sbn.getPackageName());
+					Log.d("Titel", extras.getString(Notification.EXTRA_TITLE));
+					Log.d("Text", extras.getString(Notification.EXTRA_TEXT));
 					sendBroadcast(intent);
 				}
 			}
-		} else if (android.os.Build.VERSION.SDK_INT == android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+		} /*else if (android.os.Build.VERSION.SDK_INT == android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			if (sbn.getPackageName().equals("com.android.mms")
 					|| sbn.getPackageName().equals("com.android.phone")) {
 				Notification mNotification = sbn.getNotification();
@@ -82,7 +87,7 @@ public class Notification_worker extends NotificationListenerService {
 				}
 			}
 		}
-
+*/
 	}
 
 	@Override
