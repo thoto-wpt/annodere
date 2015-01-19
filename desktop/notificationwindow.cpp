@@ -57,7 +57,10 @@ QString NotificationWindow::get_message()
 }
 
 void NotificationWindow::set_message(QString m){
-    this->message = m;
+    QTime time = QTime::currentTime();
+    QString stime = time.toString();
+    this->message = stime + m;
+    ui->lbl_nachricht->setText(this->message);
 }
 
 void NotificationWindow::set_message(std::string m){

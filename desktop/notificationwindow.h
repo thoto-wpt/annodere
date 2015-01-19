@@ -21,6 +21,7 @@ private:
 
 public:
     explicit NotificationWindow(QWidget *parent = 0);
+    explicit NotificationWindow(std::string m);
     ~NotificationWindow();
     void answer();
     void close();
