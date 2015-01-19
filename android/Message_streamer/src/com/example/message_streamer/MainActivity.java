@@ -63,9 +63,13 @@ public class MainActivity extends Activity {
 
 	public void de_activate(View view) {
 		if (android.os.Build.VERSION.SDK_INT 
-				>= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+				> android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
 			Intent intent = new Intent(
 					"android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS");
+			startActivity(intent);
+		}
+		else{
+			Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
 			startActivity(intent);
 		}
 	}
