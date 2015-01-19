@@ -181,21 +181,19 @@ public class connection_worker {
 					jr.beginObject();
 					while(jr.hasNext()){
 						jn=jr.nextName();
-						switch(jn){
-						case "result": // return result
-							res=new json_result(jr,req[0]); break;
-						case "jsonrpc":
+						if(jn.equals("result")){ // return result
+							res=new json_result(jr,req[0]);
+						}else if(jn.equals("jsonrpc")){
 							String version=jr.nextString();
-							if(!version.equals("2.0")) return null;
-							break;
-						case "error":
+							if(!version.equals("2.0")){
+								jr.close();
+								return null;
+							}
+						}else if(jn.equals("error")){
 							res=new json_result(false,jr,req[0]);
-							// things to be done here FIXME TODO
-							break;
-						case "id":
+						}else if(jn.equals("id")){
 							jr.skipValue();
-							break;
-						default:
+						}else{
 							Log.d("JSON","skip.");
 							jr.skipValue();
 						}

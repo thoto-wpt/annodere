@@ -1,17 +1,11 @@
 package com.example.message_streamer;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.Notification;
 import android.content.Intent;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
-import android.widget.RemoteViews;
 import android.widget.Toast;
 
 public class Notification_worker_preJB extends AccessibilityService {
@@ -45,8 +39,8 @@ public class Notification_worker_preJB extends AccessibilityService {
 				 */
 
 				// List<CharSequence> notificationList = event.getText();
-				// System.out.println(notificationList); // Möglichkeiten über
-				// Möglichkeiten ...
+				// System.out.println(notificationList); // Mï¿½glichkeiten ï¿½ber
+				// Mï¿½glichkeiten ...
 
 				//System.out.println(notification); // So sieht die normale, nicht
 													// geparste Version aus.
@@ -112,12 +106,12 @@ public class Notification_worker_preJB extends AccessibilityService {
 				//}
 
 				// Das oben zeigt an, was ich bisher auslesen kann
-				// Die Daten sind aber noch verschlüsselt in den Paketen =>
+				// Die Daten sind aber noch verschlï¿½sselt in den Paketen =>
 				// Pakete
-				// müssen geparst werden
+				// mï¿½ssen geparst werden
 
 				/*
-				 * In Arbeit: Suche nach dem passenden Parser für SMS und
+				 * In Arbeit: Suche nach dem passenden Parser fï¿½r SMS und
 				 * weitere... Intent result = new Intent("com.test",
 				 * Uri.parse("content://result_uri")); Uri uri =
 				 * Uri.parse("content://com.test"); Cursor c =
@@ -157,12 +151,12 @@ public class Notification_worker_preJB extends AccessibilityService {
 		info.feedbackType = AccessibilityEvent.TYPES_ALL_MASK; // und als
 																// Feedback alle
 																// Typen
-																// ermöglichen.
+																// ermï¿½glichen.
 		setServiceInfo(info);
 	}
 
 	@Override
-	public void onInterrupt() // Dürfte eigentlich nie angezeigt werden, ist nur
+	public void onInterrupt() // Dï¿½rfte eigentlich nie angezeigt werden, ist nur
 								// pro forma
 	{
 		System.out.println("onInterrupt");
