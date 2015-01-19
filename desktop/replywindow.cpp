@@ -1,6 +1,7 @@
 #include "replywindow.h"
 #include "ui_replywindow.h"
 #include "notificationwindow.h"
+#include "main.h"
 #include<QMessageBox>
 #include<QTime>
 #include<QGraphicsScene>
@@ -22,7 +23,7 @@ ReplyWindow::ReplyWindow(QWidget *parent) :
 
     QTime time = QTime::currentTime();
     QString stime = time.toString();
-    this->messages << stime + " Nachricht";
+    this->messages << not_window->get_message();
 
     //jonas: graphische Ausgabe
     ui->tE_nachrichten_verlauf->setText(this->messages[0]);

@@ -28,6 +28,8 @@ namespace Annodere{
 	 **/
 	void Connection_worker::get_notification(string msg){
 		printf("got message: %s\n",msg.c_str());
-		not_window->set_message(msg);
+        not_window->hide();
+        not_window->set_message(msg);
+        not_window->show();
 	}
 }
