@@ -90,11 +90,13 @@ public class connection_worker {
 	private synchronized boolean notification_queue_mutex(boolean p){
 		if(p){ // set mutex up
 			if(!notification_queue_mutex_up){ // mutex is available
+				Log.d("CW Mtx","lock");
 				notification_queue_mutex_up=true;
 				return true;
 			}else // mutex is unavailable
 				return false;
 		}else{ // set mutex down
+			Log.d("CW Mtx","unlock");
 			notification_queue_mutex_up=false;
 			return true;
 		}
@@ -105,27 +107,31 @@ public class connection_worker {
 	 */
 	private void process_notification_queue(){
 		if(!notification_queue_mutex(true)) return; // processing in progress
-		String not_str=not_queue.peek();
-		if(not_str==null) return; // no more to send
-
-		NetworkInfo net_info=conn_man.getActiveNetworkInfo(); // FIXME Remove
-		if (net_info!=null && net_info.isConnected()){
-			// compose request
-			JSONArray params=new JSONArray();
-			if(session_token==null){
-				Log.d("CW","session token null");
-				register();
-				return;
+		muffi:{
+			String not_str=not_queue.peek();
+			if(not_str==null) break muffi; // no more to send
+	
+			NetworkInfo net_info=conn_man.getActiveNetworkInfo(); // FIXME Remove
+			if (net_info!=null && net_info.isConnected()){
+				// compose request
+				JSONArray params=new JSONArray();
+				if(session_token==null){
+					Log.d("CW","session token null");
+					register();
+					break muffi;
+				}
+				params.put(session_token);params.put(not_str);
+				Log.d("CW","Connection Token:"+session_token);
+				json_request request=new json_request(url,"notify",params);
+				// send
+				Log.d("CW","sending ... ");
+				new http_task().execute(request);
+				return; // everything went right
+			} else {
+				Log.e("CW","Connection broke.");
 			}
-			params.put(session_token);params.put(not_str);
-			Log.d("CW","Connection Token:"+session_token);
-			json_request request=new json_request(url,"notify",params);
-			// send
-			Log.d("CW","sending ... ");
-			new http_task().execute(request);
-		} else {
-			Log.e("CW","Connection broke.");
 		}
+		notification_queue_mutex(false); // unlock muex in error case
 	}
 
 	/**
