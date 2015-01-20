@@ -152,7 +152,7 @@ public class connection_worker {
 				try { //wait some time to prevent flooding
 					Thread.sleep(500);
 				} catch (InterruptedException e) {} // don't care
-				if(res.val_type==2){
+				if(res.val_type==4){
 					Log.d("CW","Unregistered");
 					// unregistered. Try to re-register
 					register();
