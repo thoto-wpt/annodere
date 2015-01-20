@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -19,10 +20,11 @@ public class MainActivity extends Activity {
 	protected Noti_receiver nReceiver = new Noti_receiver();
 	public static final String INTENT_ACTION_NOTIFICATION = 
 			"com.example.Message_streamer";
-	private connection_worker cw;
+	private connection_worker cw=null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+		cw=new connection_worker(this);
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 	}
@@ -80,7 +82,7 @@ public class MainActivity extends Activity {
 	}
 	public void connect(View view){
 		EditText edip=(EditText) findViewById(R.id.editTextIP);
-		cw=new connection_worker(this,edip.getText().toString(),"1234");
+		cw.connect(edip.getText().toString(),"1234");
 	}
 
 	public class Noti_receiver extends BroadcastReceiver {
@@ -105,8 +107,11 @@ public class MainActivity extends Activity {
 				//zu Testzwecken:
 				System.out.println("Title:            "  + notificationTitle);
 				System.out.println("Text:             "  +notificationText);
-				cw.send_notification("NOTIFY: "+notificationTitle+" "
-						+notificationText);
+				if(cw!=null)
+					cw.send_notification("NOTIFY: "+notificationTitle+" "
+							+notificationText);
+				else Log.d("Message_streamer",
+						"NULL connection_worker. Will ignore notification.");
 			}
 
 		}

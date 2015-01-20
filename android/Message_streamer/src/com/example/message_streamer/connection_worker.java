@@ -34,28 +34,34 @@ import android.util.Log;
 public class connection_worker {
 	private String session_token;
 	private ConnectivityManager conn_man;
-	private String url;
+	private String url=null;
 	Queue<String> not_queue;
 	Timer retry_timer;
-	String token;
+	String token=null;
 
 	/**
 	 * Creates connection_worker and connects to server
-	 * @param ip IP address to connect to
-	 * @param token Authentication token to provide
+	 * @param c Context to build ConnectivityManager
 	 */
-	public connection_worker(Context c,String ip, String token){
+	public connection_worker(Context c){
 		not_queue=new LinkedList<String>();
 		conn_man=(ConnectivityManager)
 				c.getSystemService(Context.CONNECTIVITY_SERVICE);
 
+		retry_timer=new Timer();
+		retry_timer.scheduleAtFixedRate(new retry_timer_task(),500,2000);
+	}
+
+	/**
+	 * Connects to server (desktop application)
+	 * @param ip IP address to connect to
+	 * @param token Authentication token to provide
+	 */
+	public void connect(String ip, String token){
 		url="http://"+ip+":10080/annodere";
 		this.token=token;
 
 		register();
-
-		retry_timer=new Timer();
-		retry_timer.scheduleAtFixedRate(new retry_timer_task(),500,2000);
 	}
 
 	/**
@@ -73,16 +79,16 @@ public class connection_worker {
 	 * Do RPC-call to register at Desktop application
 	 */
 	private void register(){
+		if(url==null||token==null) return;
 		NetworkInfo net_info=conn_man.getActiveNetworkInfo(); // FIXME REMOVE
 		if (net_info!=null && net_info.isConnected()){
 			JSONArray params=new JSONArray();
 			params.put(token);
 			json_request request=new json_request(url,"register",params);
-			System.out.println("start ... ");
+			Log.d("CW","sending registration request ... ");
 			new http_task().execute(request);
-			System.out.println("done");
 		} else {
-			System.out.println("No connection available.");
+			Log.e("CW","No connection available.");
 		}
 	}
 
@@ -106,6 +112,7 @@ public class connection_worker {
 	 * Do RPC-Call to send oldest message to desktop
 	 */
 	private void process_notification_queue(){
+		if(url==null||token==null) return;
 		if(!notification_queue_mutex(true)) return; // processing in progress
 		muffi:{
 			String not_str=not_queue.peek();
@@ -139,6 +146,7 @@ public class connection_worker {
 	 * @param res response
 	 */
 	protected void callback(json_result res){
+		if(res==null) return; // invalid request: return
 		// process result of register call: Set session token
 		if(res.rq.method.equals("register")) session_token=res.str_val;
 		else if(res.rq.method.equals("notify")){
@@ -308,6 +316,8 @@ public class connection_worker {
 			JsonReader jr;
 			String jn;
 			
+			// test if connection data given
+			if(req[0].get_url()==null) return null;
 			try {
 				// Thread.sleep(6000); TODO TEST POINT!
 				// send HTTP request
@@ -345,7 +355,7 @@ public class connection_worker {
 					}
 					jr.close();
 					inputStream.close();
-					if(res!=null) System.out.println("Result: "+res.toString());
+					if(res!=null) Log.d("CW","Result: "+res.toString());
 					callback(res);
 					return res;
 				}
