@@ -26,9 +26,11 @@ public class Notification_worker extends NotificationListenerService {
 					intent.putExtra("title", notificationTitle);
 					intent.putExtra("text", notificationText);
 					
-					Log.d("INC", sbn.getPackageName());
-					Log.d("Titel", extras.getString(Notification.EXTRA_TITLE));
-					Log.d("Text", extras.getString(Notification.EXTRA_TEXT));
+					Log.d("CW","INC "+sbn.getPackageName());
+					Log.d("CW","Titel "
+							+extras.getString(Notification.EXTRA_TITLE));
+					Log.d("CW","Text "
+							+extras.getString(Notification.EXTRA_TEXT));
 					sendBroadcast(intent);
 				}
 			}
