@@ -19,8 +19,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.AsyncTask;
 import android.util.JsonReader;
 import android.util.JsonToken;
@@ -33,7 +31,6 @@ import android.util.Log;
  */
 public class connection_worker {
 	private String session_token;
-	private ConnectivityManager conn_man;
 	private String url=null;
 	Queue<String> not_queue;
 	Timer retry_timer;
@@ -45,8 +42,6 @@ public class connection_worker {
 	 */
 	public connection_worker(Context c){
 		not_queue=new LinkedList<String>();
-		conn_man=(ConnectivityManager)
-				c.getSystemService(Context.CONNECTIVITY_SERVICE);
 
 		retry_timer=new Timer();
 		retry_timer.scheduleAtFixedRate(new retry_timer_task(),500,2000);
@@ -93,20 +88,23 @@ public class connection_worker {
 	 * Do RPC-call to register at Desktop application
 	 */
 	private void register(){
+		// check if data are valid
 		if(url==null||token==null) return;
-		NetworkInfo net_info=conn_man.getActiveNetworkInfo(); // FIXME REMOVE
-		if (net_info!=null && net_info.isConnected()){
-			JSONArray params=new JSONArray();
-			params.put(token);
-			json_request request=new json_request(url,"register",params);
-			Log.d("CW","sending registration request ... ");
-			new http_task().execute(request);
-		} else {
-			Log.e("CW","No connection available.");
-		}
+		// compose request
+		JSONArray params=new JSONArray();
+		params.put(token);
+		json_request request=new json_request(url,"register",params);
+		// send request
+		Log.d("CW","sending registration request ... ");
+		new http_task().execute(request);
 	}
 
 	private boolean notification_queue_mutex_up=false;
+	/**
+	 * mutex to lock synchronized notification sending
+	 * @param p whether to set lock or unlock mutex
+	 * @return
+	 */
 	private synchronized boolean notification_queue_mutex(boolean p){
 		if(p){ // set mutex up
 			if(!notification_queue_mutex_up){ // mutex is available
@@ -131,26 +129,21 @@ public class connection_worker {
 		muffi:{
 			String not_str=not_queue.peek();
 			if(not_str==null) break muffi; // no more to send
-	
-			NetworkInfo net_info=conn_man.getActiveNetworkInfo(); // FIXME Remove
-			if (net_info!=null && net_info.isConnected()){
-				// compose request
-				JSONArray params=new JSONArray();
-				if(session_token==null){
-					Log.d("CW","session token null");
-					register();
-					break muffi;
-				}
-				params.put(session_token);params.put(not_str);
-				Log.d("CW","Connection Token:"+session_token);
-				json_request request=new json_request(url,"notify",params);
-				// send
-				Log.d("CW","sending ... ");
-				new http_task().execute(request);
-				return; // everything went right
-			} else {
-				Log.e("CW","Connection broke.");
+			//TODO: check if local network access available!
+			// compose request
+			JSONArray params=new JSONArray();
+			if(session_token==null){
+				Log.d("CW","session token null");
+				register();
+				break muffi;
 			}
+			params.put(session_token);params.put(not_str);
+			Log.d("CW","Connection Token:"+session_token);
+			json_request request=new json_request(url,"notify",params);
+			// send
+			Log.d("CW","sending ... ");
+			new http_task().execute(request);
+			return; // everything went right
 		}
 		notification_queue_mutex(false); // unlock muex in error case
 	}
