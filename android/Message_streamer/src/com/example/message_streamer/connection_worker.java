@@ -64,6 +64,20 @@ public class connection_worker {
 		register();
 	}
 
+	public void connect(){
+		if(connect_props_set()) register();
+	}
+
+	/**
+	 * check if registration is enabled
+	 * @return true if connect() has been called
+	 */
+	public boolean connect_props_set(){
+		return url!=null&&token!=null;
+		/*if(url==null||token==null) return false;
+		else return true;*/
+	}
+
 	/**
 	 * enqueue notification to be sent over network
 	 * @param not_str notification text to send

@@ -19,13 +19,18 @@ import android.widget.EditText;
 public class MainActivity extends Activity {
 	protected Noti_receiver nReceiver = new Noti_receiver();
 	public static final String INTENT_ACTION_NOTIFICATION = 
-			"com.example.Message_streamer";
+			"com.example.Message_streamer.notify";
+
+	protected Connect_receiver cReceiver=new Connect_receiver();
+	public static final String INTENT_ACTION_CONNECT=
+			"com.example.Message_streamer.connect";
+
 	private connection_worker cw=null;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
-		cw=new connection_worker(this);
 		super.onCreate(savedInstanceState);
+		cw=new connection_worker(this);
 		setContentView(R.layout.activity_main);
 	}
 
@@ -55,6 +60,10 @@ public class MainActivity extends Activity {
 			nReceiver = new Noti_receiver();
 		registerReceiver(nReceiver,
 				new IntentFilter(INTENT_ACTION_NOTIFICATION));
+		if (cReceiver == null)
+			cReceiver = new Connect_receiver();
+		registerReceiver(cReceiver,
+				new IntentFilter(INTENT_ACTION_CONNECT));
 	}
 
 	@Override
@@ -80,9 +89,27 @@ public class MainActivity extends Activity {
 		Intent intent = new Intent(this, OptionsActivity.class);
 		startActivity(intent);
 	}
+
 	public void connect(View view){
-		EditText edip=(EditText) findViewById(R.id.editTextIP);
-		cw.connect(edip.getText().toString(),"1234");
+		if(cw.connect_props_set()){
+			cw.connect();
+		}
+		else{
+			Intent intent = new Intent(this, OptionsActivity.class);
+			startActivity(intent);
+		}
+	}
+
+	public class Connect_receiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			if(intent.hasExtra("ip")&&intent.hasExtra("token")){
+				Log.d("MS-MA","Connect to "+intent.getExtras().getString("ip")+
+						" with token "+intent.getExtras().getString("token"));
+				cw.connect(intent.getExtras().getString("ip"),
+						intent.getExtras().getString("token"));
+			}
+		}
 	}
 
 	public class Noti_receiver extends BroadcastReceiver {
