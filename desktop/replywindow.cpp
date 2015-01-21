@@ -2,6 +2,7 @@
 #include "ui_replywindow.h"
 #include "notificationwindow.h"
 #include "main.h"
+#include "connection_worker.h"
 #include<QMessageBox>
 #include<QTime>
 #include<QGraphicsScene>
@@ -21,8 +22,6 @@ ReplyWindow::ReplyWindow(QWidget *parent) :
     this->image.load("Logos/Whatsapp.jpg");
     scene->setBackgroundBrush(this->image.scaled(50,50,Qt::KeepAspectRatio,Qt::SmoothTransformation));
 
-    QTime time = QTime::currentTime();
-    QString stime = time.toString();
     this->messages << not_window->get_message();
 
     //jonas: graphische Ausgabe

@@ -9,7 +9,6 @@ NotificationWindow::NotificationWindow(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::NotificationWindow)
 {
-    //jonas: muss dann dynamisch gemacht werden: ein Objekt (pro eingehender Nachricht)
     ui->setupUi(this);
 
     //jonas: setzen der Nachricht (hier noch für den Dummy)
