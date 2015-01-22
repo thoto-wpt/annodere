@@ -10,6 +10,7 @@ NotificationWindow::NotificationWindow(QWidget *parent) :
     ui(new Ui::NotificationWindow)
 {
     ui->setupUi(this);
+    setWindowFlags( Qt::CustomizeWindowHint );
 
     //jonas: setzen der Nachricht (hier noch für den Dummy)
     QTime time = QTime::currentTime();
@@ -27,6 +28,7 @@ NotificationWindow::NotificationWindow(QWidget *parent) :
 
 NotificationWindow::~NotificationWindow()
 {
+    printf("delete NotificationWindow");
     delete ui;
 }
 
@@ -36,13 +38,13 @@ void NotificationWindow::answer()
     ReplyWindow *dialog = new ReplyWindow;
     this->hide(); //jonas: NotificationWindow zuerst schließen
     dialog->show();
-
 }
 
 void NotificationWindow::close()
 {
-  //jonas: bis jetzt wird das Fenster noch über das von Qt eingefügte X  am oberen Bildschirmrand
-  //geschlossen
+  //jonas: not_window wird nur versteckt
+    printf("delete NotificationWindow");
+    this->hide();
 }
 
 void NotificationWindow::on_pB_antworten_clicked()
@@ -66,3 +68,8 @@ void NotificationWindow::set_message(std::string m){
     set_message(QString(m.c_str()));
 }
 
+
+void NotificationWindow::on_pB_close_clicked()
+{
+    NotificationWindow::close();
+}

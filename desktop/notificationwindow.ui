@@ -31,7 +31,7 @@
     <rect>
      <x>10</x>
      <y>70</y>
-     <width>201</width>
+     <width>101</width>
      <height>23</height>
     </rect>
    </property>
@@ -77,6 +77,19 @@
      <string>Kontaktinformation</string>
     </property>
    </widget>
+  </widget>
+  <widget class="QPushButton" name="pB_close">
+   <property name="geometry">
+    <rect>
+     <x>120</x>
+     <y>70</y>
+     <width>91</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Schließen</string>
+   </property>
   </widget>
  </widget>
  <resources/>

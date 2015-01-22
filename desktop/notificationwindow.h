@@ -34,6 +34,8 @@ public:
 private slots:
     void on_pB_antworten_clicked();
 
+    void on_pB_close_clicked();
+
 private:
     Ui::NotificationWindow *ui;
 
