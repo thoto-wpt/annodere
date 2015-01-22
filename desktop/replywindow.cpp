@@ -12,8 +12,9 @@ ReplyWindow::ReplyWindow(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ReplyWindow)
 {
-    //muss dann dynamisch gemacht werden: ein neues Objekt pro Aufruf
     ui->setupUi(this);
+    //No Window Border due to unknown functionality
+    setWindowFlags( Qt::CustomizeWindowHint );
 
     //this->contact=;
     //this->app_name=;

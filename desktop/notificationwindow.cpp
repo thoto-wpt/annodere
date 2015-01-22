@@ -10,7 +10,9 @@ NotificationWindow::NotificationWindow(QWidget *parent) :
     ui(new Ui::NotificationWindow)
 {
     ui->setupUi(this);
+    //No Window Border due to unknown functionality
     setWindowFlags( Qt::CustomizeWindowHint );
+    this->setFixedSize(this->width(),this->height());
 
     //jonas: setzen der Nachricht (hier noch für den Dummy)
     QTime time = QTime::currentTime();
