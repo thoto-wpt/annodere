@@ -1,8 +1,5 @@
 package com.example.message_streamer;
 
-//import android.app.Notification;
-//import android.content.Intent;
-//import android.os.Bundle;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
 import android.util.Log;

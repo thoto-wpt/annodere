@@ -15,7 +15,6 @@ import android.view.MenuItem;
 import android.view.View;
 
 public class MainActivity extends Activity {
-	//protected Noti_receiver nReceiver;
 	public static final String INTENT_ACTION_NOTIFICATION = 
 			"com.example.Message_streamer.notify";
 
@@ -54,9 +53,6 @@ public class MainActivity extends Activity {
 
 	private void register_receivers(){
 		Log.d("MS MA","Register recvs");
-		//nReceiver = new Noti_receiver();
-		//IntentFilter infilter=new IntentFilter(INTENT_ACTION_CONNECT);
-		//registerReceiver(nReceiver, infilter);
 		cReceiver = new Connect_receiver();
 		IntentFilter icfilter=new IntentFilter(INTENT_ACTION_CONNECT);
 		registerReceiver(cReceiver, icfilter);
@@ -71,8 +67,6 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		//unregisterReceiver(nReceiver);
-		//nReceiver=null;
 		unregisterReceiver(cReceiver);
 		cReceiver=null;
 	}
@@ -123,30 +117,4 @@ public class MainActivity extends Activity {
 		Log.d("Main", bla);
 		cw.send_notification("NOTIFY: "+ bla);
 	}
-	
-	/*
-	public class Noti_receiver extends BroadcastReceiver {
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			Log.d("MS MA", "Notification receiver called.");
-			if (intent != null) {
-				Bundle extras = intent.getExtras();
-				String msg=extras.getString("msg");
-				if(msg==null) return;
-				/*JSONObject json = new JSONObject();
-				try {
-					json.put("title", notificationTitle);
-					json.put("text", notificationText);
-				}catch (JSONException e) {
-					e.printStackTrace();
-				}json.toString();
-				if(cw!=null)
-					cw.send_notification("NOTIFY: "+msg);
-				else Log.d("Message_streamer",
-						"NULL connection_worker. Will ignore notification.");
-			}
-
-		}
-	}*/
 }
