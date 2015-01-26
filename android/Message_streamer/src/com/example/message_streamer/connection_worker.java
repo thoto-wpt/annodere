@@ -53,7 +53,7 @@ public class connection_worker {
 	 * @param token Authentication token to provide
 	 */
 	public void connect(String ip, String token){
-		url="http://"+ip+":10080/annodere";
+		url="http://"+ip+"/annodere";
 		this.token=token;
 
 		register();
