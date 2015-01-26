@@ -1,17 +1,11 @@
 package com.example.message_streamer;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.AccessibilityServiceInfo;
-import android.app.Notification;
-import android.content.Intent;
+//import android.app.Notification;
+//import android.content.Intent;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
-import android.widget.RemoteViews;
 import android.widget.Toast;
 
 public class Notification_worker_preJB extends AccessibilityService {
@@ -21,18 +15,28 @@ public class Notification_worker_preJB extends AccessibilityService {
 		if (event.getEventType() == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
 			if (event.getPackageName().equals("com.android.mms")
 					|| event.getPackageName().equals("com.android.phone")) {
-				Notification notification = (Notification) event.getParcelableData();
+				/*Notification notification = (Notification) event.getParcelableData();
 				
 				String nachricht;
 				Log.d("tos", "toString");
 				nachricht = notification.tickerText.toString();
 				Log.d("text", nachricht);
 				Intent intent = new Intent(MainActivity.INTENT_ACTION_NOTIFICATION);
-				intent.putExtra("tickertext", nachricht);	
-				Log.d("Intent", intent.toString());
-				Log.d("vBr", "In JB-worker");
+				intent.putExtra("msg", nachricht);
 				sendBroadcast(intent);
+*/
 
+final String packagename = String.valueOf(event.getPackageName());  
+				final String text = String.valueOf(event.getText());
+				/*
+				String bla = String.valueOf(event.getParcelableData());
+				String tt = notification.tickerText.toString();
+				Log.d("tt", tt);
+				Log.d("bla", bla);
+				*/
+				Log.d("String P", packagename);
+				Log.d("tickertext", text);
+				MainActivity.send(text);
 				/*
 				 * // Unwichtige, aber interessante Details: Log.d("INC",
 				 * "Incoming notification!"); Log.d("PACK", "App: " +
@@ -45,8 +49,8 @@ public class Notification_worker_preJB extends AccessibilityService {
 				 */
 
 				// List<CharSequence> notificationList = event.getText();
-				// System.out.println(notificationList); // Möglichkeiten über
-				// Möglichkeiten ...
+				// System.out.println(notificationList); // Mï¿½glichkeiten ï¿½ber
+				// Mï¿½glichkeiten ...
 
 				//System.out.println(notification); // So sieht die normale, nicht
 													// geparste Version aus.
@@ -112,12 +116,12 @@ public class Notification_worker_preJB extends AccessibilityService {
 				//}
 
 				// Das oben zeigt an, was ich bisher auslesen kann
-				// Die Daten sind aber noch verschlüsselt in den Paketen =>
+				// Die Daten sind aber noch verschlï¿½sselt in den Paketen =>
 				// Pakete
-				// müssen geparst werden
+				// mï¿½ssen geparst werden
 
 				/*
-				 * In Arbeit: Suche nach dem passenden Parser für SMS und
+				 * In Arbeit: Suche nach dem passenden Parser fï¿½r SMS und
 				 * weitere... Intent result = new Intent("com.test",
 				 * Uri.parse("content://result_uri")); Uri uri =
 				 * Uri.parse("content://com.test"); Cursor c =
@@ -137,35 +141,19 @@ public class Notification_worker_preJB extends AccessibilityService {
 	}
 
 	@Override
-	protected void onServiceConnected() // Wenn der Service aktiv ist...
-	{
-		System.out.println("onServiceConnected"); // ... soll er sich melden,
-													// ...
-
+	protected void onServiceConnected() {
+		Log.d("MS NW","Service connected");
 		AccessibilityServiceInfo info = new AccessibilityServiceInfo();
-		// info.feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN; // Art
-		// des Feedbacks: z.B. hier: Das Smartphone liest vor
-
-		info.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED; // ...
-																				// nach
-																				// NOTIFICATIONS
-																				// Ausschau
-																				// halten,
-																				// ...
-
-		info.notificationTimeout = 100; // ... und zwar jede 100 ms ...
-		info.feedbackType = AccessibilityEvent.TYPES_ALL_MASK; // und als
-																// Feedback alle
-																// Typen
-																// ermöglichen.
+		// look for notification events
+		info.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED;
+		info.notificationTimeout = 100;
+		info.feedbackType = AccessibilityEvent.TYPES_ALL_MASK;
 		setServiceInfo(info);
 	}
 
 	@Override
-	public void onInterrupt() // Dürfte eigentlich nie angezeigt werden, ist nur
-								// pro forma
-	{
-		System.out.println("onInterrupt");
+	public void onInterrupt(){
+		Log.d("MS NW","onInterrupt");
 		Toast.makeText(getApplicationContext(), "onInterr", Toast.LENGTH_SHORT)
 				.show();
 	}

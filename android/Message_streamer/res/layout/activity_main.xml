@@ -37,22 +37,19 @@
             android:layout_height="wrap_content" >
 
             <Button
-                android:id="@+id/button1"
+                android:id="@+id/buttonConnect"
+                style="?android:attr/buttonStyleSmall"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/connect"
                 android:onClick="connect" />
 
-            <EditText
-                android:id="@+id/editTextIP"
+            <TextView
+                android:id="@+id/textViewConnected"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:ems="10"
-                android:text="192.168.1.18" >
-
-                <requestFocus />
-            </EditText>
+                android:text="@string/not_connected"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
 
         </LinearLayout>
 

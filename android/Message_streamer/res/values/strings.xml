@@ -8,5 +8,11 @@
     <string name="service_description">Dieser Service lässt Nachrichten abfangen, die in der Statusbar erscheinen.</string>
     <string name="options">Einstellungen</string>
     <string name="connect">Verbinden</string>
+    <string name="manual_ip">manuell</string>
+    <string name="zeroconf_ip">automatisch</string>
+    <string name="filter_tbd">Filter folgt in Kürze</string>
+    <string name="default_ip">192.168.1.18</string>
+    <string name="not_connected">nicht verbunden</string>
+    <string name="connected">verbunden!</string>
 
 </resources>
