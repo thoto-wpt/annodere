@@ -44,6 +44,13 @@
                 android:text="@string/connect"
                 android:onClick="connect" />
 
+            <TextView
+                android:id="@+id/textViewConnected"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/not_connected"
+                android:textAppearance="?android:attr/textAppearanceLarge" />
+
         </LinearLayout>
 
     </LinearLayout>

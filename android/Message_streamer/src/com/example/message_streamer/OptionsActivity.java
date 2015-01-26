@@ -1,6 +1,5 @@
 package com.example.message_streamer;
 
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.Context;
@@ -29,7 +28,7 @@ public class OptionsActivity extends Activity {
 	private NsdManager nsd_man;
 	private EditText edip;
 	DiscoveryListener dnssd_listener;
-	boolean zc_running=false;
+	boolean zc_running;
 
 	/**
 	 * Zeroconf host selection item
@@ -52,45 +51,6 @@ public class OptionsActivity extends Activity {
 
 		public String toString(){
 			return "Name: "+host;
-		}
-	}
-
-	/**
-	 * Zerconf discovery listener for this service
-	 * @author thoto
-	 *
-	 */
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-	private class disco_listener implements NsdManager.DiscoveryListener{
-		@Override
-		public void onDiscoveryStarted(String serviceType) {
-			Log.i("NSD","disco start");
-		}
-
-		@Override
-		public void onDiscoveryStopped(String serviceType) {
-			Log.i("NSD","disco stopped");
-		}
-
-		@Override
-		public void onServiceFound(NsdServiceInfo serviceInfo) {
-			Log.i("NSD","Service disco successful.");
-			resolve_annodere_service(serviceInfo);
-		}
-
-		@Override
-		public void onServiceLost(NsdServiceInfo serviceInfo) {
-			//FIXME
-		}
-
-		@Override
-		public void onStartDiscoveryFailed(String serviceType, int err) {
-			Log.e("NSD","disco start failed: "+err);
-		}
-
-		@Override
-		public void onStopDiscoveryFailed(String serviceType, int err) {
-			Log.e("NSD","disco stop failed: "+err);
 		}
 	}
 
@@ -132,25 +92,66 @@ public class OptionsActivity extends Activity {
 	 * Zeroconf discovery setup including handler
 	 */
 	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-	private void init_disco(){
+	private synchronized void init_disco(){
 		nsd_man=(NsdManager) this.getSystemService(Context.NSD_SERVICE);
-		dnssd_listener = new disco_listener();
-		start_disco();
-	}
-
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-	private void start_disco(){
-		if(zc_running) return;
-		nsd_man.discoverServices("_annodere._tcp", NsdManager.PROTOCOL_DNS_SD,
-				dnssd_listener);
-		zc_running=true;
-	}
-
-	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
-	private void stop_disco(){
-		if(!zc_running) return;
-		nsd_man.stopServiceDiscovery(dnssd_listener);
 		zc_running=false;
+	}
+
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	private synchronized void start_disco(){
+		Log.i("NSD","start_disco(): "+((!zc_running)?"zc is not running"
+				:"zc is ALREADY running"));
+		if(!zc_running){
+			zc_running=true;
+			dnssd_listener = new NsdManager.DiscoveryListener(){
+				@Override
+				public void onDiscoveryStarted(String st) {
+					Log.i("NSD","disco start");
+				}
+
+				@Override
+				public void onDiscoveryStopped(String serviceType) {
+					Log.i("NSD","disco stopped");
+				}
+
+				@Override
+				public void onServiceFound(NsdServiceInfo serviceInfo) {
+					Log.i("NSD","Service disco successful.");
+					resolve_annodere_service(serviceInfo);
+				}
+
+				@Override
+				public void onServiceLost(NsdServiceInfo serviceInfo) {
+					//FIXME
+				}
+
+				@Override
+				public void onStartDiscoveryFailed(String serviceType, int err) {
+					if(err==NsdManager.FAILURE_INTERNAL_ERROR){
+						Log.e("NSD","disco start failed: internal. Retrying.");
+						start_disco();
+					}
+					else Log.e("NSD","disco start failed: "+err);
+				}
+
+				@Override
+				public void onStopDiscoveryFailed(String serviceType, int err) {
+					Log.e("NSD","disco stop failed: "+err);
+				}
+			};
+			nsd_man.discoverServices("_annodere._tcp",
+					NsdManager.PROTOCOL_DNS_SD,dnssd_listener);
+		}
+	}
+
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN)
+	private synchronized void stop_disco(){
+		Log.i("NSD","stop_disco(): "+((zc_running)?"zc is running"
+				:"zc is NOT running"));
+		if(zc_running){
+			nsd_man.stopServiceDiscovery(dnssd_listener);
+			zc_running=false;
+		}
 	}
 
 	/**
@@ -179,7 +180,9 @@ public class OptionsActivity extends Activity {
 			text=text+":10080"; // int parsing failed ... append!
 		}
 
+		Log.d("MS OA", "Sending connect: IP: \""+text+"\", ...");
 		Intent i = new Intent(MainActivity.INTENT_ACTION_CONNECT);
+		i.addFlags(Intent.FLAG_INCLUDE_STOPPED_PACKAGES);
 		i.putExtra("ip", text);
 		i.putExtra("token", "1234");
 		sendBroadcast(i);
@@ -231,7 +234,6 @@ public class OptionsActivity extends Activity {
 						|| actionId==KeyEvent.KEYCODE_ENTER
 						|| ((event.getKeyCode() == KeyEvent.KEYCODE_ENTER) &&
 							(event.getAction() == KeyEvent.ACTION_DOWN ))){
-					Log.d("MS-OA","FOO!");
 					send_intent_ip();
 					return true;
 				}
@@ -249,9 +251,13 @@ public class OptionsActivity extends Activity {
 			});
 
 		// zerconf
+		zc_running=false;
 		zc_sp=(Spinner) findViewById(R.id.spinnerZC);
 		if(android.os.Build.VERSION.SDK_INT >= 
 				android.os.Build.VERSION_CODES.JELLY_BEAN){
+			Log.i("NSD","Init disco on start");
+			zc_running=true;
+			init_disco();
 			// setup zeroconf UI stuff
 			zc_adapter=new ArrayAdapter<zc_spinner_item>(
 					this, android.R.layout.simple_spinner_item);
@@ -268,7 +274,7 @@ public class OptionsActivity extends Activity {
 				@Override
 				public void onNothingSelected(AdapterView<?> arg0){}
 			});
-			init_disco();
+			zc_running=false;
 		}else zc_sp.setVisibility(View.INVISIBLE); // not supported OS version
 	}
 
@@ -277,6 +283,7 @@ public class OptionsActivity extends Activity {
 		super.onResume();
 		if(android.os.Build.VERSION.SDK_INT >=
 				android.os.Build.VERSION_CODES.JELLY_BEAN){
+			Log.i("NSD","Disco start on resume");
 			start_disco();
 		}
 	}
@@ -286,6 +293,7 @@ public class OptionsActivity extends Activity {
 		super.onPause();
 		if(android.os.Build.VERSION.SDK_INT >=
 				android.os.Build.VERSION_CODES.JELLY_BEAN){
+			Log.i("NSD","Disco start on pause");
 			stop_disco();
 		}
 	}

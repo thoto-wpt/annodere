@@ -12,5 +12,7 @@
     <string name="zeroconf_ip">automatisch</string>
     <string name="filter_tbd">Filter folgt in Kürze</string>
     <string name="default_ip">192.168.1.18</string>
+    <string name="not_connected">nicht verbunden</string>
+    <string name="connected">verbunden!</string>
 
 </resources>

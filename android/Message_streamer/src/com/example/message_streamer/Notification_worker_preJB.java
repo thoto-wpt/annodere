@@ -22,9 +22,7 @@ public class Notification_worker_preJB extends AccessibilityService {
 				nachricht = notification.tickerText.toString();
 				Log.d("text", nachricht);
 				Intent intent = new Intent(MainActivity.INTENT_ACTION_NOTIFICATION);
-				intent.putExtra("tickertext", nachricht);	
-				Log.d("Intent", intent.toString());
-				Log.d("vBr", "In JB-worker");
+				intent.putExtra("msg", nachricht);
 				sendBroadcast(intent);
 
 				/*
@@ -131,35 +129,19 @@ public class Notification_worker_preJB extends AccessibilityService {
 	}
 
 	@Override
-	protected void onServiceConnected() // Wenn der Service aktiv ist...
-	{
-		System.out.println("onServiceConnected"); // ... soll er sich melden,
-													// ...
-
+	protected void onServiceConnected() {
+		Log.d("MS NW","Service connected");
 		AccessibilityServiceInfo info = new AccessibilityServiceInfo();
-		// info.feedbackType = AccessibilityServiceInfo.FEEDBACK_SPOKEN; // Art
-		// des Feedbacks: z.B. hier: Das Smartphone liest vor
-
-		info.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED; // ...
-																				// nach
-																				// NOTIFICATIONS
-																				// Ausschau
-																				// halten,
-																				// ...
-
-		info.notificationTimeout = 100; // ... und zwar jede 100 ms ...
-		info.feedbackType = AccessibilityEvent.TYPES_ALL_MASK; // und als
-																// Feedback alle
-																// Typen
-																// erm�glichen.
+		// look for notification events
+		info.eventTypes = AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED;
+		info.notificationTimeout = 100;
+		info.feedbackType = AccessibilityEvent.TYPES_ALL_MASK;
 		setServiceInfo(info);
 	}
 
 	@Override
-	public void onInterrupt() // D�rfte eigentlich nie angezeigt werden, ist nur
-								// pro forma
-	{
-		System.out.println("onInterrupt");
+	public void onInterrupt(){
+		Log.d("MS NW","onInterrupt");
 		Toast.makeText(getApplicationContext(), "onInterr", Toast.LENGTH_SHORT)
 				.show();
 	}

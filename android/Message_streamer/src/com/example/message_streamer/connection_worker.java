@@ -47,6 +47,9 @@ public class connection_worker {
 		retry_timer.scheduleAtFixedRate(new retry_timer_task(),500,2000);
 	}
 
+	private synchronized void set_session_token(String tok){
+		if(session_token.isEmpty()) this.session_token=tok;
+	}
 	/**
 	 * Connects to server (desktop application)
 	 * @param ip IP address to connect to
@@ -56,6 +59,7 @@ public class connection_worker {
 		url="http://"+ip+"/annodere";
 		this.token=token;
 
+		session_token="";
 		register();
 	}
 
@@ -132,7 +136,7 @@ public class connection_worker {
 			//TODO: check if local network access available!
 			// compose request
 			JSONArray params=new JSONArray();
-			if(session_token==null){
+			if(session_token==null||session_token.isEmpty()){
 				Log.d("CW","session token null");
 				register();
 				break muffi;
@@ -155,7 +159,9 @@ public class connection_worker {
 	protected void callback(json_result res){
 		if(res==null) return; // invalid request: return
 		// process result of register call: Set session token
-		if(res.rq.method.equals("register")) session_token=res.str_val;
+		if(res.rq.method.equals("register")) {
+			set_session_token(res.str_val);
+		}
 		else if(res.rq.method.equals("notify")){
 			notification_queue_mutex(false); // make method available again
 			Log.d("CW","Notification Result: ");
