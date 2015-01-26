@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <lint>
     <issue id="InlinedApi">
-        <ignore path="src/com/example/message_streamer/NotificationReceiver.java" />
-        <ignore path="src/com/example/message_streamer/Notification_worker.java" />
     </issue>
     <issue id="NewApi">
-        <ignore path="src/com/example/message_streamer/NotificationReceiver.java" />
-        <ignore path="src/com/example/message_streamer/Notification_worker.java" />
     </issue>
 </lint>

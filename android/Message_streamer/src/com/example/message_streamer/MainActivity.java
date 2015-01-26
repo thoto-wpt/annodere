@@ -16,7 +16,7 @@ import android.view.View;
 
 public class MainActivity extends Activity {
 	protected Noti_receiver nReceiver;
-	public static final String INTENT_ACTION_NOTIFICATION = 
+	public static final String INTENT_ACTION_NOTIFY =
 			"com.example.Message_streamer.notify";
 
 	protected Connect_receiver cReceiver;
@@ -55,7 +55,7 @@ public class MainActivity extends Activity {
 	private void register_receivers(){
 		Log.d("MS MA","Register recvs");
 		nReceiver = new Noti_receiver();
-		IntentFilter infilter=new IntentFilter(INTENT_ACTION_CONNECT);
+		IntentFilter infilter=new IntentFilter(INTENT_ACTION_NOTIFY);
 		registerReceiver(nReceiver, infilter);
 		cReceiver = new Connect_receiver();
 		IntentFilter icfilter=new IntentFilter(INTENT_ACTION_CONNECT);
@@ -85,7 +85,8 @@ public class MainActivity extends Activity {
 			startActivity(intent);
 		}
 		else{
-			Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+			Intent intent = new Intent(
+					android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
 			startActivity(intent);
 		}
 	}
@@ -135,7 +136,7 @@ public class MainActivity extends Activity {
 					e.printStackTrace();
 				}json.toString();*/
 				if(cw!=null)
-					cw.send_notification("NOTIFY: "+msg);
+					cw.send_notification(msg);
 				else Log.d("Message_streamer",
 						"NULL connection_worker. Will ignore notification.");
 			}
