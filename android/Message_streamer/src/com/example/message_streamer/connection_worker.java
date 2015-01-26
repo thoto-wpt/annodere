@@ -25,16 +25,162 @@ import android.util.JsonToken;
 import android.util.Log;
 
 /**
+ * result structure emitted by JSON RPC calls
+ * @author thoto
+ *
+ */
+class json_result{
+	public int val_type=0; //! 0: Err 1: Str, 2: Num, 3: Bool, 4: Null
+	public boolean err=true;
+	public String str_val;
+	public Integer int_val;
+	public boolean bool_val;
+	public boolean err_critical;
+	public json_request rq;
+
+	/**
+	 * return result
+	 * @param reader read value from this reader
+	 * @param rq request to include reference to
+	 */
+	public json_result(JsonReader reader,json_request rq){
+		JsonToken json_type;
+
+		this.rq=rq;
+		try {
+			json_type = reader.peek();
+			err=false;
+			switch(json_type){
+			case STRING:
+				val_type=1; str_val=reader.nextString(); break;
+			case NUMBER:
+				val_type=2; int_val=reader.nextInt(); break;
+			case BOOLEAN:
+				val_type=3; bool_val=reader.nextBoolean(); break;
+			case NULL:
+				val_type=4; reader.skipValue(); break;
+			default:
+				err=true; err_critical=false; str_val="no valid return";
+				val_type=0; reader.skipValue(); break;
+			}
+		} catch (IOException e) {
+			err=true;
+			err_critical=true;
+			str_val="IO Exception while reading";
+			e.printStackTrace();
+		}
+	}
+
+	/**
+	 * Constructor for error result
+	 * @param b is error critical?
+	 * @param jr reader to skip element
+	 * @param rq request to include reference to
+	 * @throws IOException
+	 */
+	public json_result(boolean b,JsonReader jr,json_request rq)
+			throws IOException{//error case
+		this.rq=rq;
+		jr.skipValue();
+
+		err=true;err_critical=b;
+		str_val="some error TODO"; // TODO
+	}
+
+	/**
+	 * make printable string for debugging purposes
+	 */
+	@Override
+	public String toString(){
+		if(err) return "EE"+(err_critical?"C":"E")+": "+str_val;
+
+		switch(val_type){
+		case 1:  return str_val;
+		case 2:  return int_val.toString();
+		case 3:  return Boolean.valueOf(bool_val).toString();
+		case 4:  return "NULL";
+		default: return "Err";
+		}
+	}
+}
+
+
+/**
+ * JSON RPC call request structure
+ * @author thoto
+ *
+ */
+class json_request{
+	public String method;
+	public JSONArray params;
+	private String url;
+	public json_request(String url, String method, JSONArray params){
+		this.url=url;
+		this.method=method;
+		this.params=params;
+	}
+	public String get_url(){
+		return url;
+	}
+	public String get_request(){
+		JSONObject jsonrq=new JSONObject();
+		try {
+			jsonrq.put("jsonrpc", "2.0");
+			jsonrq.put("id", "null");
+			jsonrq.put("method", method);
+			jsonrq.put("params", params);
+			return "request="+jsonrq.toString();
+		} catch (JSONException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return "request=error";
+		}
+	}
+}
+
+
+
+
+/**
  * Worker to handle every kind of network RPC stuff
  * @author thoto
  *
  */
 public class connection_worker {
-	private String session_token;
+	private Queue<String> not_queue;
+	private Timer retry_timer;
+	private String token=null;
+	private String session_token=null;
 	private String url=null;
-	Queue<String> not_queue;
-	Timer retry_timer;
-	String token=null;
+
+	public enum cw_state_t{CW_INIT,CW_UNREGISTERED,CW_REGISTERED};
+	public class cw_state_machine{
+		private cw_state_t cw_state;
+		private String cw_err=null;
+
+		cw_state_machine(){
+			cw_state=cw_state_t.CW_INIT;
+		}
+
+		public void set(cw_state_t state,String err){
+			cw_err=err;
+			cw_state=state;
+		}
+
+		public void set(cw_state_t state){
+			set(state,null);
+		}
+
+		public cw_state_t get(){
+			return cw_state;
+		}
+
+		public String get_err(){
+			return cw_err;
+		}
+	}
+
+	private cw_state_machine cw_state;
 
 	/**
 	 * Creates connection_worker and connects to server
@@ -42,25 +188,33 @@ public class connection_worker {
 	 */
 	public connection_worker(Context c){
 		not_queue=new LinkedList<String>();
+		cw_state=new cw_state_machine();
 
 		retry_timer=new Timer();
 		retry_timer.scheduleAtFixedRate(new retry_timer_task(),500,2000);
 	}
 
 	private synchronized void set_session_token(String tok){
-		if(session_token.isEmpty()) this.session_token=tok;
+		if(cw_state.get()==cw_state_t.CW_UNREGISTERED){
+			this.session_token=tok;
+		}
 	}
 	/**
 	 * Connects to server (desktop application)
 	 * @param ip IP address to connect to
 	 * @param token Authentication token to provide
 	 */
-	public void connect(String ip, String token){
-		url="http://"+ip+"/annodere";
-		this.token=token;
+	public void connect(String ip, String newtoken){
+		String newurl="http://"+ip+"/annodere";
+		token=newtoken;
 
-		session_token="";
-		register();
+		if(url==null||!newurl.equals(url)){
+			//new connetion
+			url=newurl;
+			session_token=null;
+			register();
+			cw_state.set(cw_state_t.CW_UNREGISTERED);
+		}
 	}
 
 	public void connect(){
@@ -73,8 +227,6 @@ public class connection_worker {
 	 */
 	public boolean connect_props_set(){
 		return url!=null&&token!=null;
-		/*if(url==null||token==null) return false;
-		else return true;*/
 	}
 
 	/**
@@ -82,18 +234,22 @@ public class connection_worker {
 	 * @param not_str notification text to send
 	 */
 	public void send_notification(String not_str){
-		if(not_queue.isEmpty()){
-			not_queue.add(not_str);
+		assert(not_str!=null);
+		boolean queue_state=not_queue.isEmpty();
+		not_queue.add(not_str);
+		if(queue_state&&cw_state.get()==cw_state_t.CW_REGISTERED){
+			Log.d("CW","Got notification. Start processing immediately.");
 			process_notification_queue();
-		}else not_queue.add(not_str);
+		}else Log.d("CW","Got notification. Enqueued.");
 	}
 
 	/**
 	 * Do RPC-call to register at Desktop application
 	 */
 	private void register(){
+		assert(url!=null);assert(token!=null);
 		// check if data are valid
-		if(url==null||token==null) return;
+		if(cw_state.get()==cw_state_t.CW_REGISTERED) return;
 		// compose request
 		JSONArray params=new JSONArray();
 		params.put(token);
@@ -112,13 +268,13 @@ public class connection_worker {
 	private synchronized boolean notification_queue_mutex(boolean p){
 		if(p){ // set mutex up
 			if(!notification_queue_mutex_up){ // mutex is available
-				Log.d("CW Mtx","lock");
+				Log.d("CW","Mutex lock");
 				notification_queue_mutex_up=true;
 				return true;
 			}else // mutex is unavailable
 				return false;
 		}else{ // set mutex down
-			Log.d("CW Mtx","unlock");
+			Log.d("CW","Mutex unlock");
 			notification_queue_mutex_up=false;
 			return true;
 		}
@@ -128,7 +284,12 @@ public class connection_worker {
 	 * Do RPC-Call to send oldest message to desktop
 	 */
 	private void process_notification_queue(){
-		if(url==null||token==null) return;
+		assert(url!=null);assert(token!=null);
+		if(cw_state.get()!=cw_state_t.CW_REGISTERED){
+			register();
+			return;
+		}
+
 		if(!notification_queue_mutex(true)) return; // processing in progress
 		muffi:{
 			String not_str=not_queue.peek();
@@ -137,19 +298,18 @@ public class connection_worker {
 			// compose request
 			JSONArray params=new JSONArray();
 			if(session_token==null||session_token.isEmpty()){
-				Log.d("CW","session token null");
+				Log.e("CW","session token null");
 				register();
 				break muffi;
 			}
 			params.put(session_token);params.put(not_str);
-			Log.d("CW","Connection Token:"+session_token);
 			json_request request=new json_request(url,"notify",params);
 			// send
-			Log.d("CW","sending ... ");
+			Log.d("CW","sending notification with token "+session_token);
 			new http_task().execute(request);
-			return; // everything went right
+			// everything went right
 		}
-		notification_queue_mutex(false); // unlock muex in error case
+		notification_queue_mutex(false); // unlock mutex in error case
 	}
 
 	/**
@@ -157,23 +317,27 @@ public class connection_worker {
 	 * @param res response
 	 */
 	protected void callback(json_result res){
-		if(res==null) return; // invalid request: return
+		assert(res!=null);
 		// process result of register call: Set session token
 		if(res.rq.method.equals("register")) {
-			set_session_token(res.str_val);
+			if(res.val_type==1){
+				set_session_token(res.str_val);
+				cw_state.set(cw_state_t.CW_REGISTERED);
+			}else Log.e("CW","Registration failed: "+res.toString());
 		}
 		else if(res.rq.method.equals("notify")){
 			notification_queue_mutex(false); // make method available again
-			Log.d("CW","Notification Result: ");
 			if(res.val_type==3 && res.bool_val==true){
-				Log.d("CW","OK!");
-				not_queue.poll(); // successfully sent: remove top element
+				Log.d("CW","OK!"); // successfully sent: remove top element
+				// and process queue if not empty yet
+				if(not_queue.poll()==null) Log.i("CW","Sent message twice.");
 				if(!not_queue.isEmpty()) process_notification_queue();
 			}else{
 				try { //wait some time to prevent flooding
 					Thread.sleep(500);
 				} catch (InterruptedException e) {} // don't care
 				if(res.val_type==4){
+					cw_state.set(cw_state_t.CW_UNREGISTERED);
 					Log.d("CW","Unregistered");
 					// unregistered. Try to re-register
 					register();
@@ -183,7 +347,7 @@ public class connection_worker {
 					process_notification_queue(); // retry
 				}
 			}
-		}
+		}else Log.e("CW","callback received result for unknown method!");
 	}
 
 	/**
@@ -194,122 +358,15 @@ public class connection_worker {
 	private class retry_timer_task extends TimerTask{
 		@Override
 		public void run() {
-			if(!not_queue.isEmpty()) process_notification_queue();
+			if(cw_state.get()==cw_state_t.CW_UNREGISTERED) register();
+			else if(cw_state.get()==cw_state_t.CW_REGISTERED
+					&& !not_queue.isEmpty()) process_notification_queue();
 		}
 	}
 
-	/**
-	 * JSON RPC call request structure
-	 * @author thoto
-	 *
-	 */
-	private class json_request{
-		public String method;
-		public JSONArray params;
-		private String url;
-		public json_request(String url, String method, JSONArray params){
-			this.url=url;
-			this.method=method;
-			this.params=params;
-		}
-		public String get_url(){
-			return url;
-		}
-		public String get_request(){
-			JSONObject jsonrq=new JSONObject();
-			try {
-				jsonrq.put("jsonrpc", "2.0");
-				jsonrq.put("id", "null");
-				jsonrq.put("method", method);
-				jsonrq.put("params", params);
-				return "request="+jsonrq.toString();
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-				return "request=error";
-			}
-		}
-	}
 
-	/**
-	 * result structure emitted by JSON RPC calls
-	 * @author thoto
-	 *
-	 */
-	private class json_result{
-		public int val_type=0; //! 0: Err 1: Str, 2: Num, 3: Bool, 4: Null
-		public boolean err=true;
-		public String str_val;
-		public Integer int_val;
-		public boolean bool_val;
-		public boolean err_critical;
-		public json_request rq;
 
-		/**
-		 * return result
-		 * @param reader read value from this reader
-		 * @param rq request to include reference to
-		 */
-		public json_result(JsonReader reader,json_request rq){
-			JsonToken json_type;
 
-			this.rq=rq;
-			try {
-				json_type = reader.peek();
-				err=false;
-				switch(json_type){
-				case STRING:
-					val_type=1; str_val=reader.nextString(); break;
-				case NUMBER:
-					val_type=2; int_val=reader.nextInt(); break;
-				case BOOLEAN:
-					val_type=3; bool_val=reader.nextBoolean(); break;
-				case NULL:
-					val_type=4; reader.skipValue(); break;
-				default:
-					err=true; err_critical=false; str_val="no valid return";
-					val_type=0; reader.skipValue(); break;
-				}
-			} catch (IOException e) {
-				err=true;
-				err_critical=true;
-				str_val="IO Exception while reading";
-				e.printStackTrace();
-			}
-		}
-
-		/**
-		 * Constructor for error result
-		 * @param b is error critical?
-		 * @param jr reader to skip element
-		 * @param rq request to include reference to
-		 * @throws IOException
-		 */
-		public json_result(boolean b,JsonReader jr,json_request rq) 
-				throws IOException{//error case
-			this.rq=rq;
-			jr.skipValue();
-
-			err=true;err_critical=b;
-			str_val="some error TODO"; // TODO
-		}
-
-		/**
-		 * make printable string for debugging purposes
-		 */
-		@Override
-		public String toString(){
-			if(err) return "EE"+(err_critical?"C":"E")+": "+str_val;
-
-			switch(val_type){
-			case 1:  return str_val;
-			case 2:  return int_val.toString();
-			case 3:  return Boolean.valueOf(bool_val).toString();
-			case 4:  return "NULL";
-			default: return "Err";
-			}
-		}
-	}
 
 	/**
 	 * Task to execute HTTP request
@@ -319,18 +376,18 @@ public class connection_worker {
 	private class http_task extends AsyncTask<json_request,Integer,json_result>{
 		@Override
 		protected json_result doInBackground(json_request... req) {
+			assert(req[0].get_url()!=null);
+
 			// initialization
 			HttpClient client;
 			HttpPost post;
 			HttpResponse response;
 			InputStream inputStream = null;
-			
+
 			json_result res = null;
 			JsonReader jr;
 			String jn;
-			
-			// test if connection data given
-			if(req[0].get_url()==null) return null;
+
 			try {
 				// Thread.sleep(6000); TODO TEST POINT!
 				// send HTTP request
@@ -339,6 +396,10 @@ public class connection_worker {
 				post.setEntity(new StringEntity(req[0].get_request()));
 				response=client.execute(post);
 				
+				if(response.getEntity()==null){
+					Log.e("CW HT","Entity is null");
+					return null;
+				}
 				// parse response
 				inputStream = response.getEntity().getContent();
 				if(inputStream != null){
@@ -355,6 +416,7 @@ public class connection_worker {
 							String version=jr.nextString();
 							if(!version.equals("2.0")){
 								jr.close();
+								Log.e("CW HT","Invalid RPC version");
 								return null;
 							}
 						}else if(jn.equals("error")){ // return error TODO
@@ -362,22 +424,22 @@ public class connection_worker {
 						}else if(jn.equals("id")){ // don't handle id TODO
 							jr.skipValue();
 						}else{ // unknown thingy
-							Log.d("JSON","skip.");
+							Log.d("CW HT","skip.");
 							jr.skipValue();
 						}
 					}
 					jr.close();
-					inputStream.close();
-					if(res!=null) Log.d("CW","Result: "+res.toString());
+					if(res!=null) Log.d("CW HT","Result: "+res.toString());
+					else Log.d("CW HT","Result: NULL");
 					callback(res);
 					return res;
 				}
 			} catch (Exception e) {
-				Log.e("CW Async", "Exception");
+				Log.e("CW HT", "Exception");
 				String msg=e.getMessage();
-				if(msg!=null) Log.e("CW Async",e.getMessage());
-				else Log.e("CW Async","NULL exception");
-				Log.e("CW Async",e.toString());
+				if(msg!=null) Log.e("CW HT",e.getMessage());
+				else Log.e("CW HT","NULL exception");
+				Log.e("CW HT",e.toString());
 			}
 			return null;
 		}

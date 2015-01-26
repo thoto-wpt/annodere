@@ -13,6 +13,7 @@ public class Notification_worker_preJBROB extends AccessibilityService {
 	@Override
 	public void onAccessibilityEvent(AccessibilityEvent event) {
 		String tickertext;
+		Log.d("MS NW","pre JBROB: got AE");
 
 		if (event.getEventType() ==
 				AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
