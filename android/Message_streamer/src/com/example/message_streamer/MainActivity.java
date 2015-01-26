@@ -15,11 +15,11 @@ import android.view.MenuItem;
 import android.view.View;
 
 public class MainActivity extends Activity {
-	protected Noti_receiver nReceiver;
+	protected Noti_receiver nReceiver=null;
 	public static final String INTENT_ACTION_NOTIFY =
 			"com.example.Message_streamer.notify";
 
-	protected Connect_receiver cReceiver;
+	protected Connect_receiver cReceiver=null;
 	public static final String INTENT_ACTION_CONNECT=
 			"com.example.Message_streamer.connect";
 
@@ -61,31 +61,38 @@ public class MainActivity extends Activity {
 
 	private void register_receivers(){
 		Log.d("MS MA","Register recvs");
+
+		if(nReceiver!=null) Log.e("MS MA","Receiver is not null!");
 		nReceiver = new Noti_receiver();
 		IntentFilter infilter=new IntentFilter(INTENT_ACTION_NOTIFY);
 		registerReceiver(nReceiver, infilter);
-		cReceiver = new Connect_receiver();
-		IntentFilter icfilter=new IntentFilter(INTENT_ACTION_CONNECT);
-		registerReceiver(cReceiver, icfilter);
+		if(cReceiver==null){
+			cReceiver = new Connect_receiver();
+			IntentFilter icfilter=new IntentFilter(INTENT_ACTION_CONNECT);
+			registerReceiver(cReceiver, icfilter);
+		}else Log.d("MS MA","Receiver is not null!");
 	}
 	private void unregister_receivers(){
 		Log.d("MS MA","UNregister Receivers");
-		unregisterReceiver(nReceiver);
-		nReceiver=null;
-		unregisterReceiver(cReceiver);
-		cReceiver=null;
+
+		if(nReceiver!=null){
+			unregisterReceiver(nReceiver);
+			nReceiver=null;
+		}else Log.e("MS MA","Notify-Receiver is already null!");
+		if(cReceiver!=null){
+			unregisterReceiver(cReceiver);
+			cReceiver=null;
+		}else Log.d("MS MA","Receiver is already null!");
 	}
 
 	@Override
 	protected void onResume() {
 		super.onResume();
-		register_receivers();
 	}
 
 	@Override
 	protected void onPause() {
 		super.onPause();
-		unregister_receivers();
 	}
 
 	public void de_activate(View view) {
