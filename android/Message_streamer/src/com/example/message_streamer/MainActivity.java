@@ -30,7 +30,14 @@ public class MainActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		cw=new connection_worker(this);
 		setContentView(R.layout.activity_main);
+
 		register_receivers();
+	}
+
+	protected void onDestroy(){
+		super.onDestroy();
+
+		unregister_receivers();
 	}
 
 	@Override
@@ -61,6 +68,13 @@ public class MainActivity extends Activity {
 		IntentFilter icfilter=new IntentFilter(INTENT_ACTION_CONNECT);
 		registerReceiver(cReceiver, icfilter);
 	}
+	private void unregister_receivers(){
+		Log.d("MS MA","UNregister Receivers");
+		unregisterReceiver(nReceiver);
+		nReceiver=null;
+		unregisterReceiver(cReceiver);
+		cReceiver=null;
+	}
 
 	@Override
 	protected void onResume() {
@@ -71,10 +85,7 @@ public class MainActivity extends Activity {
 	@Override
 	protected void onPause() {
 		super.onPause();
-		unregisterReceiver(nReceiver);
-		nReceiver=null;
-		unregisterReceiver(cReceiver);
-		cReceiver=null;
+		unregister_receivers();
 	}
 
 	public void de_activate(View view) {
