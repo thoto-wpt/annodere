@@ -9,11 +9,11 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.Toast;
 
 public class Notification_worker_preJBROB extends AccessibilityService {
+	public static boolean active=false;
 
 	@Override
 	public void onAccessibilityEvent(AccessibilityEvent event) {
 		String tickertext;
-		Log.d("MS NW","pre JBROB: got AE");
 
 		if (event.getEventType() ==
 				AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED) {
@@ -43,6 +43,13 @@ public class Notification_worker_preJBROB extends AccessibilityService {
 		info.notificationTimeout = 100;
 		info.feedbackType = AccessibilityEvent.TYPES_ALL_MASK;
 		setServiceInfo(info);
+
+		active=true;
+		Intent intent = new Intent(
+				MainActivity.INTENT_ACTION_STATE);
+		intent.putExtra("var", "aeenabled");
+		intent.putExtra("val", "true");
+		sendBroadcast(intent);
 	}
 
 	@Override

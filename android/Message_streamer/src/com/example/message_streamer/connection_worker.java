@@ -19,6 +19,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.util.JsonReader;
 import android.util.JsonToken;
@@ -152,8 +153,14 @@ public class connection_worker {
 	private String token=null;
 	private String session_token=null;
 	private String url=null;
+	private Context c;
 
 	public enum cw_state_t{CW_INIT,CW_UNREGISTERED,CW_REGISTERED};
+	/**
+	 * State machine for connection_worker
+	 * @author thoto
+	 *
+	 */
 	public class cw_state_machine{
 		private cw_state_t cw_state;
 		private String cw_err=null;
@@ -165,6 +172,19 @@ public class connection_worker {
 		public void set(cw_state_t state,String err){
 			cw_err=err;
 			cw_state=state;
+			if(state==cw_state_t.CW_REGISTERED){
+				Intent intent = new Intent(
+						MainActivity.INTENT_ACTION_STATE);
+				intent.putExtra("var", "connected");
+				intent.putExtra("val", "true");
+				c.sendBroadcast(intent);
+			}else{
+				Intent intent = new Intent(
+						MainActivity.INTENT_ACTION_STATE);
+				intent.putExtra("var", "connected");
+				intent.putExtra("val", "false");
+				c.sendBroadcast(intent);
+			}
 		}
 
 		public void set(cw_state_t state){
@@ -186,7 +206,8 @@ public class connection_worker {
 	 * Creates connection_worker and connects to server
 	 * @param c Context to build ConnectivityManager
 	 */
-	public connection_worker(Context c){
+	public connection_worker(Context pc){
+		c=pc;
 		not_queue=new LinkedList<String>();
 		cw_state=new cw_state_machine();
 
@@ -194,11 +215,16 @@ public class connection_worker {
 		retry_timer.scheduleAtFixedRate(new retry_timer_task(),500,2000);
 	}
 
+	/**
+	 * sets session token if state is unregistered
+	 * @param tok new session token
+	 */
 	private synchronized void set_session_token(String tok){
 		if(cw_state.get()==cw_state_t.CW_UNREGISTERED){
 			this.session_token=tok;
 		}
 	}
+
 	/**
 	 * Connects to server (desktop application)
 	 * @param ip IP address to connect to
@@ -217,6 +243,9 @@ public class connection_worker {
 		}
 	}
 
+	/**
+	 * external call to connect with current properties
+	 */
 	public void connect(){
 		if(connect_props_set()) register();
 	}
@@ -364,10 +393,6 @@ public class connection_worker {
 		}
 	}
 
-
-
-
-
 	/**
 	 * Task to execute HTTP request
 	 * @author thoto
@@ -395,7 +420,7 @@ public class connection_worker {
 				post=new HttpPost(req[0].get_url());
 				post.setEntity(new StringEntity(req[0].get_request()));
 				response=client.execute(post);
-				
+
 				if(response.getEntity()==null){
 					Log.e("CW HT","Entity is null");
 					return null;
@@ -405,7 +430,7 @@ public class connection_worker {
 				if(inputStream != null){
 					jr=new JsonReader(new BufferedReader(
 							new InputStreamReader(inputStream)));
-					
+
 					// parse JSON part
 					jr.beginObject();
 					while(jr.hasNext()){

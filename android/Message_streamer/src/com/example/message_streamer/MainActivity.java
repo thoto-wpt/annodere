@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.TextView;
 
 public class MainActivity extends Activity {
 	protected Noti_receiver nReceiver=null;
@@ -23,6 +24,10 @@ public class MainActivity extends Activity {
 	public static final String INTENT_ACTION_CONNECT=
 			"com.example.Message_streamer.connect";
 
+	protected State_receiver sReceiver=null;
+	public static final String INTENT_ACTION_STATE=
+			"com.example.Message_streamer.state";
+
 	private connection_worker cw=null;
 
 	@Override
@@ -32,6 +37,14 @@ public class MainActivity extends Activity {
 		setContentView(R.layout.activity_main);
 
 		register_receivers();
+
+		if (android.os.Build.VERSION.SDK_INT
+				<= android.os.Build.VERSION_CODES.JELLY_BEAN_MR2) {
+			TextView act_button=(TextView) findViewById(R.id.de_activate);
+			act_button.setText(getString(R.string.activate)+"\n"
+					+getString(Notification_worker_preJBROB.active?
+							R.string.state_active:R.string.state_inactive));
+		}
 	}
 
 	protected void onDestroy(){
@@ -71,7 +84,13 @@ public class MainActivity extends Activity {
 			IntentFilter icfilter=new IntentFilter(INTENT_ACTION_CONNECT);
 			registerReceiver(cReceiver, icfilter);
 		}else Log.d("MS MA","Receiver is not null!");
+		if(sReceiver==null){
+			sReceiver = new State_receiver();
+			IntentFilter isfilter=new IntentFilter(INTENT_ACTION_STATE);
+			registerReceiver(sReceiver, isfilter);
+		}else Log.d("MS MA","Receiver is not null!");
 	}
+
 	private void unregister_receivers(){
 		Log.d("MS MA","UNregister Receivers");
 
@@ -83,6 +102,10 @@ public class MainActivity extends Activity {
 			unregisterReceiver(cReceiver);
 			cReceiver=null;
 		}else Log.d("MS MA","Receiver is already null!");
+		if(sReceiver!=null){
+			unregisterReceiver(sReceiver);
+			sReceiver=null;
+		}else Log.d("MS MA","sReceiver is already null!");
 	}
 
 	@Override
@@ -159,6 +182,40 @@ public class MainActivity extends Activity {
 						"NULL connection_worker. Will ignore notification.");
 			}
 
+		}
+	}
+
+	public class State_receiver extends BroadcastReceiver {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			Log.d("MS MA", "State receiver called.");
+			if (intent != null) {
+				Bundle extras = intent.getExtras();
+				String var=extras.getString("var");
+				String val=extras.getString("val");
+				if(var==null||val==null) return;
+				if(var.equals("aeenabled")){
+					// Accessibility Event enabled or disabled
+					TextView act_button=(TextView) 
+							findViewById(R.id.de_activate);
+
+					if(val.equals("true"))
+						act_button.setText(getString(R.string.activate)+"\n"
+								+getString(R.string.state_active));
+					else if(val.equals("false"))
+						act_button.setText(getString(R.string.activate)+"\n"
+								+getString(R.string.state_inactive));
+					else Log.e("MS MA","Invalid state of accessibility event!");
+				}else if(var.equals("connected")){
+					TextView con_view=(TextView)
+							findViewById(R.id.textViewConnected);
+
+					if(val.equals("true")) con_view.setText(R.string.connected);
+					else if(val.equals("false"))
+						con_view.setText(R.string.not_connected);
+					else Log.e("MS MA","Invalid state of connection recvd!");
+				}
+			}
 		}
 	}
 }
