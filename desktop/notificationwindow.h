@@ -4,7 +4,6 @@
 #include <QWidget>
 #include<QString>
 #include<QPixmap>
-#include<string>
 
 namespace Ui {
 class NotificationWindow;
@@ -27,7 +26,7 @@ public:
     void close();
     QString get_message();
     void set_message(QString m);
-    void set_message(std::string m);
+    void append_message(QString m);
 
     friend class ReplyWindow;
 
@@ -35,6 +34,7 @@ private slots:
     void on_pB_antworten_clicked();
 
     void on_pB_close_clicked();
+    void on_notify(QString msg);
 
 private:
     Ui::NotificationWindow *ui;

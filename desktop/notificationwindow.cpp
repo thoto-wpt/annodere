@@ -53,6 +53,10 @@ void NotificationWindow::on_pB_antworten_clicked()
 {
     NotificationWindow::answer();
 }
+void NotificationWindow::on_notify(QString msg){
+	append_message(msg);
+	show();
+}
 
 QString NotificationWindow::get_message()
 {
@@ -66,10 +70,12 @@ void NotificationWindow::set_message(QString m){
     ui->lbl_nachricht->setText(this->message);
 }
 
-void NotificationWindow::set_message(std::string m){
-    set_message(QString(m.c_str()));
+void NotificationWindow::append_message(QString m){
+    QTime time = QTime::currentTime();
+    QString stime = time.toString();
+    message = message+"\n"+stime + " " +m;
+    ui->lbl_nachricht->setText(message);
 }
-
 
 void NotificationWindow::on_pB_close_clicked()
 {

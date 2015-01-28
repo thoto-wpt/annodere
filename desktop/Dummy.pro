@@ -23,6 +23,7 @@ SOURCES += main.cpp\
     notificationwindow.cpp \
     rpc/rpc_server.cpp \
     rpc/connection_worker.cpp
+#    notify_thread.cpp
 #    connection_worker.cpp
 
 HEADERS  += \
@@ -30,7 +31,8 @@ HEADERS  += \
     replywindow.h \
     notificationwindow.h \
     rpc/rpc_server.h \
-    rpc/connection_worker.h
+    rpc/connection_worker.h \
+    notify_handler.h
 #     connection_worker.h
 
 FORMS    += \

@@ -1,5 +1,5 @@
 #include"connection_worker.h"
-#include"main.h"
+#include"notify_handler.h"
 
 namespace Annodere{
 	/**
@@ -28,8 +28,6 @@ namespace Annodere{
 	 **/
 	void Connection_worker::get_notification(string msg){
 		printf("got message: %s\n",msg.c_str());
-        not_window->hide();
-        not_window->set_message(msg);
-        not_window->show();
+		notify_handler foo(msg);
 	}
 }
