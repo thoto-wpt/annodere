@@ -1,9 +1,12 @@
 #ifdef __cplusplus
 extern "C"{
 #endif 
-// #include<sys/types.h>
+#include<stdarg.h>
+#include<stdint.h>
+#include<sys/time.h>
+#include<sys/types.h>
 // #include<sys/select.h>
-// #include<sys/socket.h>
+#include<sys/socket.h>
 #include<microhttpd.h>
 #include<pthread.h>
 #ifdef __cplusplus
@@ -107,6 +110,7 @@ namespace Annodere{
 	class Rpc_server{
 		private:
 			struct MHD_Daemon* mhd_daemon;
+			struct MHD_Daemon* mhd_daemon_legacy;
 			int port;
 			//unordered_multimap<string,Rpc_method*> methods;
 			unordered_map<string,Rpc_method*> methods;

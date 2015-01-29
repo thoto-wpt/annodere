@@ -363,9 +363,14 @@ namespace Annodere{
 			code=404;
 		}
 
+#if MHD_VERSION > 0x00093901
 		response=MHD_create_response_from_buffer(data.length(),
 			reinterpret_cast<void*>(const_cast<char*>(data.c_str())),
-			MHD_RESPMEM_MUST_COPY);
+            MHD_RESPMEM_MUST_COPY);
+#else
+        response=MHD_create_response_from_data(data.length(),
+            reinterpret_cast<void*>(const_cast<char*>(data.c_str())),0,1);
+#endif
 		if(MHD_add_response_header(response,"Content-type","application/json")
 			==MHD_NO) printf("EEH resp head\n");
 		ret=MHD_queue_response(connection, code, response);
@@ -383,7 +388,7 @@ namespace Annodere{
 	string Rpc_server::generate_error(const signed int code){
 		string err="{\"jsonrpc\": \"2.0\", \"error\": {\"code\": ";
 		string err2=", \"message\": \"";
-		string err3="\", \"id\": null}";
+		string err3="\", \"id\": null} }";
 		switch(code){
 			case err_parse: //-32700:
 				err+=to_string(code)+err2+"Parse error"+err3; break;
@@ -422,6 +427,13 @@ namespace Annodere{
 			port, nullptr, nullptr, c_handler, this, MHD_OPTION_END);
 		if(mhd_daemon==nullptr)
 			printf("EEH: Daemon initialisation failed\n");
+
+		mhd_daemon_legacy=MHD_start_daemon(
+			MHD_USE_THREAD_PER_CONNECTION|MHD_USE_PEDANTIC_CHECKS,
+			port, nullptr, nullptr, c_handler, this, MHD_OPTION_END);
+		if(mhd_daemon_legacy==nullptr)
+			printf("EEH: Daemon initialisation failed\n");
+
 	}
 
 	/**
@@ -429,6 +441,7 @@ namespace Annodere{
 	 **/
 	Rpc_server::~Rpc_server(){
 		MHD_stop_daemon(mhd_daemon);
+		MHD_stop_daemon(mhd_daemon_legacy);
 		for(auto m: methods){
 			delete m.second;
 		}

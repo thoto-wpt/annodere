@@ -6,7 +6,7 @@ namespace Annodere{
 	 * Constructor of connection_worker. Creates RPC server and registers
 	 * methods to it.
 	 **/
-	Connection_worker::Connection_worker(): rpc_server() {
+	Connection_worker::Connection_worker(): rpc_server(10080) {
 		method_wait=new Rpc_method_wait();
 		rpc_server.register_method(new Rpc_method_register());
 		rpc_server.register_method(method_wait);
